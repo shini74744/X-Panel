@@ -1000,9 +1000,9 @@ ssl_cert_issue() {
 
     if [ -z "$domain_ip" ]; then
         echo ""
-        LOGE "未能查询到域名 ${domain} 的 A 记录。"
+        LOGE "未能查询到域名 ${domain} 的 “A 记录”。"
         echo ""
-        LOGE "请确保您的域名已在 DNS 服务商处添加了 A 记录，并指向本机 IP。"
+        LOGE "请确保您的域名已在 DNS 服务商处添加了〔A 记录〕，并指向本机 IP。"
         echo ""
         LOGE "提示：如果您使用的是 Cloudflare，请确保【小黄云】（代理）已关闭。"
         exit 1
@@ -1014,13 +1014,13 @@ ssl_cert_issue() {
         echo ""
         LOGE "域名 ${domain} 解析的 IP (${domain_ip}) 与本机 IP (${public_ip}) 不符！"
         echo ""
-        LOGE "请检查您的 DNS A 记录设置是否正确。"
+        LOGE "请检查您的 DNS 中 的〔A 记录〕设置是否正确。"
         echo ""
         LOGE "提示：如果您使用的是 Cloudflare，请确保【小黄云】（代理）已关闭。"
         exit 1
     fi
 
-    LOGI "域名解析验证成功，继续执行证书申请..."
+    LOGI "域名解析验证成功，继续执行证书申请......"
     echo ""
 
     # 检查是否已存在证书
@@ -1031,7 +1031,7 @@ ssl_cert_issue() {
         LOGI "$certInfo"
         exit 1
     else
-        LOGI "您的域名现在可以签发证书了..."
+        LOGI "您的域名现在可以签发证书了......"
     fi
 
     # 为证书创建一个目录
