@@ -274,7 +274,7 @@ install_x-ui() {
             exit 1
         fi
     fi
-    wget -O /usr/bin/x-ui-temp https://raw.githubusercontent.com/xinsuiyuandong/x-panel/main/x-ui.sh
+    wget -O /usr/bin/x-ui-temp https://raw.githubusercontent.com/shini74744/X-Panel/main/x-ui.sh
 
     # Stop x-ui service and remove old resources
     if [[ -e /usr/local/x-ui/ ]]; then
@@ -446,19 +446,10 @@ echo -e "${green} 详细安装教程：${yellow}https://xeefei.blogspot.com/2025
 echo ""
 echo -e "----------------------------------------------"
 echo ""
-echo -e "-------------->>>>>>>赞 助 推 广 区<<<<<<<<-------------------"
+echo -e "-------------->>>>>>>探 针 地 址<<<<<<<<-------------------"
 echo ""
-echo -e "${green}1、搬瓦工GIA高端线路：${yellow}https://bandwagonhost.com/aff.php?aff=75015${plain}"
-echo ""
-echo -e "${green}2、Dmit高端GIA线路：${yellow}https://www.dmit.io/aff.php?aff=9326${plain}"
-echo ""
-echo -e "${green}3、Sharon亚太优化线路机：${yellow}https://gomami.io/aff.php?aff=174${plain}"
-echo ""
-echo -e "${green}4、Bagevm优质落地鸡（原生IP全解锁）：${yellow}https://www.bagevm.com/aff.php?aff=754${plain}"
-echo ""
-echo -e "${green}5、白丝云〔4837线路〕实惠量大管饱：${yellow}https://cloudsilk.io/aff.php?aff=706${plain}"
-echo ""
-echo -e "${green}6、RackNerd极致性价比机器：${yellow}https://my.racknerd.com/aff.php?aff=15268&pid=912${plain}"
+echo -e "${green}探针地址：${yellow}shli.io${plain}"
 echo ""
 echo -e "----------------------------------------------"
 echo ""
+
