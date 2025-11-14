@@ -274,7 +274,7 @@ install_x-ui() {
             exit 1
         fi
     fi
-    wget -O /usr/bin/x-ui-temp https://raw.githubusercontent.com/xinsuiyuandong/x-panel/main/x-ui.sh
+    wget -O /usr/bin/x-ui-temphttps://raw.githubusercontent.com/shini74744/X-Panel/main/x-ui.sh
 
     # Stop x-ui service and remove old resources
     if [[ -e /usr/local/x-ui/ ]]; then
