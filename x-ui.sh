@@ -1812,7 +1812,7 @@ show_menu() {
 
 -------------->>>>>>>赞 助 推 广 区<<<<<<<<-------------------
 
-${green}1、搬瓦工GIA高端线路：${yellow}https://shli.io${plain}
+${green}1、探针地址：${yellow}https://shli.io${plain}
 
 
 
