@@ -117,7 +117,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/xeefei/x-panel/master/install.
 
 - 【全新安装】请执行以下脚本：
 ```
-bash <(curl -Ls https://raw.githubusercontent.com/xeefei/x-panel/master/install.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/shini74744/X-Panel/master/install.sh)
 ```
 #### 如果执行了上面的代码但是报错，证明你的系统里面没有curl这个软件，请执行以下命令先安装curl软件，安装curl之后再去执行上面代码，
 ```
