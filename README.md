@@ -21,14 +21,7 @@
   </a>
 </p>
 
-- 赞助地址（USDT）：
-- TRC20 ---->>> `TYQEmQp1P65u9bG7KPehgJdvuokfb72YkZ`
-- Polygon ---->>> `0xd20eBE429c2398793178e015B2ca1Dc42601f3Eb`
-- Solana ---->>> `7qVEZuV98QTDN5qUmsFwvqTSvkYpmLtNf8o1sh1mppwR`
-- BSC/BEP20 ---->>> `0xd20eBE429c2398793178e015B2ca1Dc42601f3Eb`
 
-## [【X-Panel面板】交流群：https://t.me/XUI_CN](https://t.me/XUI_CN)
-## [【X-Panel面板】详细安装流程步骤：https://xeefei.blogspot.com/2025/09/x-panel.html](https://xeefei.blogspot.com/2025/09/x-panel.html)
 
 ------------
 ## ✰〔X-Panel面板〕跟原版3X-UI的区别？✰
@@ -810,10 +803,7 @@ XUI_BIN_FOLDER="bin" XUI_DB_FOLDER="/etc/x-ui" go build main.go
 
 ------------
 ## 广告赞助
-- 如果你觉得本项目对你有用，而且你也恰巧有这方面的需求，你也可以选择通过我的购买链接赞助我。
-- [1、搬瓦工GIA高端线路，仅推荐购买GIA套餐：https://bandwagonhost.com/aff.php?aff=75015](https://bandwagonhost.com/aff.php?aff=75015)
-- [2、Dmit高端GIA线路：https://www.dmit.io/aff.php?aff=9326](https://www.dmit.io/aff.php?aff=9326)
-- [3、白丝云【4837线路】实惠量大管饱：https://cloudsilk.io/aff.php?aff=706](https://cloudsilk.io/aff.php?aff=706)
+- 探针地址：shli.io
 
 ------------
 ## 特别感谢
