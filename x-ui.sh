@@ -39,9 +39,9 @@ echo -e "当前服务器的操作系统为:${red} $release${plain}"
 echo ""
 xui_version=$(/usr/local/x-ui/x-ui -v)
 last_version=$(curl -Ls "https://api.github.com/repos/xeefei/x-panel-pro/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-echo -e "${green}当前代理面板的版本为: ${red}〔X-Panel 付费Pro版〕v${xui_version}${plain}"
+echo -e "${green}当前代理面板的版本为: ${red}〔DAdaGI- 专属面板〕v${xui_version}${plain}"
 echo ""
-echo -e "${yellow}〔X-Panel 付费Pro版〕最新版为---------->>> ${last_version}${plain}"
+echo -e "${yellow}〔DAdaGI- 专属面板〕最新版为---------->>> ${last_version}${plain}"
 
 os_version=$(grep -i version_id /etc/os-release | cut -d \" -f2 | cut -d . -f1)
 
@@ -238,7 +238,7 @@ custom_version() {
     # Use the entered panel version in the download link
     install_command="bash <(curl -Ls $download_link) v$panel_version"
 
-    echo "下载并安装〔X-Panel 付费Pro版〕 $panel_version..."
+    echo "下载并安装〔DAdaGI- 专属面板〕 $panel_version..."
     eval $install_command
 }
 
@@ -1334,7 +1334,7 @@ echo -e "2. 自动调用面板的证书"
 echo -e "3. 自动部署 Sublink 服务"
 echo -e "4. 自动配置 Nginx 反向代理"
 echo -e "5. 可直观在前端页面配置订阅"
-echo -e "作者：〔X-Panel 付费Pro版〕专属定制"
+echo -e "作者：〔DAdaGI- 专属面板〕专属定制"
 echo -e "===============================================${plain}"
 echo ""
     local existing_cert=$(/usr/local/x-ui/x-ui setting -getCert true | grep -Eo 'cert: .+' | awk '{print $2}')
