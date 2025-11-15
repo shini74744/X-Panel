@@ -37,7 +37,7 @@ fi
 echo -e "——————————————————————"
 echo -e "当前服务器的操作系统为:${red} $release${plain}"
 echo ""
-if [[ -x /usr/local/x-ui/x-ui ]]; then     xui_version=$(/usr/local/x-ui/x-ui -v) else     xui_version="未安装" fi
+xui_version=$(/usr/local/x-ui/x-ui -v)
 last_version=$(curl -Ls "https://api.github.com/repos/xeefei/x-panel-pro/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 echo -e "${green}当前代理面板的版本为: ${red}〔DAdaGi-大大怪专属版〕v${xui_version}${plain}"
 echo ""
@@ -153,7 +153,6 @@ install() {
     fi
 }
 
-# ======= 已改成从你自己的 GitHub Release 下载二进制更新 =======
 update() {
     confirm "$(echo -e "${green}该功能将强制安装最新版本，并且数据不会丢失。${red}你想继续吗？${plain}---->>请输入")" "y"
     if [[ $? != 0 ]]; then
@@ -163,34 +162,12 @@ update() {
         fi
         return 0
     fi
-
-    # 自定义更新地址：GitHub Release 里的 x-ui 二进制
-    NEW_XUI_URL="https://github.com/shini74744/xpnh/releases/download/v1.0.0/x-ui"
-
-    LOGI "正在从自定义地址下载 X-Panel 主程序..."
-
-    # 备份旧版本
-    if [[ -f /usr/local/x-ui/x-ui ]]; then
-        cp /usr/local/x-ui/x-ui /usr/local/x-ui/x-ui.bak.$(date +%Y%m%d%H%M%S)
+    bash <(curl -Ls https://raw.githubusercontent.com/xeefei/x-panel-pro/main/install.sh)
+    if [[ $? == 0 ]]; then
+        LOGI "更新完成，面板已自动重启"
+        exit 0
     fi
-
-    curl -fL -o /usr/local/x-ui/x-ui "${NEW_XUI_URL}"
-    if [[ $? != 0 ]]; then
-        LOGE "从 ${NEW_XUI_URL} 下载失败，已保留旧版本"
-        if [[ $# == 0 ]]; then
-            before_show_menu
-        fi
-        return 1
-    fi
-
-    chmod +x /usr/local/x-ui/x-ui
-    LOGI "面板主程序更新完成，准备重启..."
-
-    restart 0
-    LOGI "更新完成，面板已自动重启"
-    exit 0
 }
-# ============================================================
 
 update_menu() {
     echo -e "${yellow}更新菜单项${plain}"
@@ -818,7 +795,7 @@ update_geo() {
     wget -O geoip_VN.dat https://github.com/vuong2023/vn-v2ray-rules/releases/latest/download/geoip.dat
     wget -O geosite_VN.dat https://github.com/vuong2023/vn-v2ray-rules/releases/latest/download/geosite.dat
     systemctl start x-ui
-    echo -e "${green}Geosite.dat + Geoip.dat + geoip_IR.dat + geosite_IR.dat 在 bin 文件夹: '${binFolder}' 中已经更新成功 !${plain}"
+    echo -e "${green}Geosite.dat + Geoip.dat + geoip_IR.dat + geosite_IR.dat 在 bin 文件夹: '${binfolder}' 中已经更新成功 !${plain}"
     before_show_menu
 }
 
@@ -1767,6 +1744,9 @@ iplimit_remove_conflicts() {
     done
 }
 
+# 【中文注释】：这是新添加的“网页版SSH工具”安装函数
+# 1. 自动从 GitHub API 获取最新版本
+# 2. 完整移植了 .go 文件中的 UFW、Nginx 和 systemd 逻辑
 install_sshwifty() {
     echo "=== 开始安装 Sshwifty (网页版SSH) ==="
     
@@ -1854,6 +1834,7 @@ install_sshwifty() {
 
     # 1. 安装依赖
     LOGI "正在安装依赖: curl, wget, tar, jq..."
+    # 【中文注释】：增加了 jq，用于更可靠地修改 json 配置文件
     DEPENDENCIES="curl wget tar jq"
     UNMET_DEPS=""
     for dep in $DEPENDENCIES; do
@@ -1898,7 +1879,7 @@ install_sshwifty() {
         LOGI "检测到 Nginx 已安装，跳过安装步骤。"
     fi
 
-    # 2. 自动获取最新版本
+    # 2. 【重大更新】：自动获取最新版本
     LOGI "正在从 GitHub API 获取 Sshwifty 最新版本..."
     DOWNLOAD_URL=$(curl -s "https://api.github.com/repos/nirui/sshwifty/releases/latest" | grep "browser_download_url" | grep "linux_amd64.tar.gz" | cut -d '"' -f 4 | head -n 1)
 
@@ -1916,8 +1897,9 @@ install_sshwifty() {
     LOGI "正在下载 $FILENAME..."
     rm -rf $TEMP_DIR
     mkdir -p $TEMP_DIR
+    # 【中文注释】：使用 curl -fsL 替代 wget，-f 失败时静默退出，-s 静默，-L 跟随跳转
     curl -fsL -o "$TEMP_DIR/$FILENAME" $DOWNLOAD_URL
-    if [ $? != 0 ]; then 
+    if [ $? -ne 0 ]; then 
         LOGE "致命错误: 下载 Sshwifty 失败！"
         rm -rf $TEMP_DIR
         return 1
@@ -1925,7 +1907,7 @@ install_sshwifty() {
 
     LOGI "正在解压文件..."
     tar -xzvf "$TEMP_DIR/$FILENAME" -C $TEMP_DIR
-    if [ $? != 0 ]; then 
+    if [ $? -ne 0 ]; then 
         LOGE "致命错误: 解压 Sshwifty 失败。文件可能已损坏。"
         rm -rf $TEMP_DIR
         return 1
@@ -1934,6 +1916,7 @@ install_sshwifty() {
     # 4. 复制可执行文件并授权
     INSTALL_PATH="/usr/local/bin/sshwifty"
     LOGI "正在安装可执行文件到 $INSTALL_PATH..."
+    # 【中文注释】：在解压目录中查找可执行文件
     BINARY_FILE=$(find $TEMP_DIR -type f \( -name "sshwifty_linux_amd64" -o -name "sshwifty" \) | head -n 1)
 
     if [ ! -f "$BINARY_FILE" ]; then
@@ -1946,14 +1929,16 @@ install_sshwifty() {
     chmod +x "$INSTALL_PATH"
     LOGI "安装成功: $INSTALL_PATH"
 
-    # 5. 生成默认配置文件
+    # 5. 生成默认配置文件 (保留 IP 修复逻辑)
     CONFIG_PATH="/etc/sshwifty.conf.json"
     if [ ! -f "$CONFIG_PATH" ]; then
         LOGI "正在创建默认配置文件: $CONFIG_PATH..."
+        # 【中文注释】：在解压目录中查找示例配置文件
         EXAMPLE_CONFIG=$(find $TEMP_DIR -type f -name "*sshwifty.conf.example.json*" | head -n 1)
         if [ -f "$EXAMPLE_CONFIG" ]; then
             cp "$EXAMPLE_CONFIG" "$CONFIG_PATH"
         else
+            # 【中文注释】：如果找不到，创建一个最小配置
             cat <<EOF > $CONFIG_PATH
 {
     "Host": "127.0.0.1", 
@@ -1963,10 +1948,12 @@ install_sshwifty() {
 }
 EOF
         fi
+        # 【中文注释】：确保 Host 正确设置为 127.0.0.1
         jq '.Host = "127.0.0.1"' $CONFIG_PATH > $CONFIG_PATH.tmp && mv $CONFIG_PATH.tmp $CONFIG_PATH
         LOGI "默认配置文件已创建并修正。"
     else
         LOGI "配置文件 $CONFIG_PATH 已存在，跳过创建。"
+        # 【中文注释】：确保 Host 正确设置为 127.0.0.1
         jq '.Host = "127.0.0.1"' $CONFIG_PATH > $CONFIG_PATH.tmp && mv $CONFIG_PATH.tmp $CONFIG_PATH
         LOGI "确保 $CONFIG_PATH 监听 127.0.0.1 (使用 jq)"
     fi
@@ -2011,12 +1998,13 @@ EOF
 
     # 10. 配置 Nginx 反向代理
     LOGI "=== 开始配置 Nginx 反向代理 (8188 -> 8182) ==="
-    DOMAIN="${domain}"
+    DOMAIN="${domain}" # <--- 这里使用我们之前获取的变量
 
     if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
         LOGE "⚠️ **警告：Nginx 配置跳过**"
         LOGE "错误: 找不到 Nginx 所需的 SSL 证书！Sshwifty 服务已运行在 127.0.0.1:8182。"
     else
+        # 【中文注释】：移植 Go 代码中的证书复制逻辑
         mkdir -p /etc/nginx/ssl
         cp "${CERT_FILE}" "/etc/nginx/ssl/${DOMAIN}.cer"
         cp "${KEY_FILE}" "/etc/nginx/ssl/${DOMAIN}.key"
@@ -2026,6 +2014,7 @@ EOF
 server {
     listen 8188 ssl http2;
     server_name ${DOMAIN};
+    # 【中文注释】：使用复制后的证书路径
     ssl_certificate       /etc/nginx/ssl/${DOMAIN}.cer;
     ssl_certificate_key /etc/nginx/ssl/${DOMAIN}.key;
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -2049,6 +2038,7 @@ EOF
 
     LOGI "=== Sshwifty 安装并启动成功! ==="
     
+    # 【中文注释】：安装完成后向用户显示最终访问信息
     echo ""
     echo -e "${green}🎉 恭喜！【网页版SSH】模块已成功安装！${plain}"
     echo ""
@@ -2066,17 +2056,21 @@ EOF
     before_show_menu
 }
 
+# 【中文注释】：这是新添加的“线路和IP检测”相关函数
 ip_check() {
+    # 【中文注释】：功能 1：检测 IP
     bash <(curl -Ls https://Check.Place) -I
     before_show_menu
 }
 
 route_check() {
+    # 【中文注释】：功能 2：检测线路
     bash <(curl -Ls https://Check.Place) -N
     before_show_menu
 }
 
 check_place_menu() {
+    # 【中文注释】：这是选项 27 的子菜单
     echo -e "
   ${green}线路和IP检测 (Check.Place)${plain}
   
@@ -2102,22 +2096,25 @@ check_place_menu() {
     esac
 }
 
+# 【中文注释】：这是新添加的“服务器DNS检测”函数
 dns_check() {
     echo ""
-    # 执行服务器 DNS 检测脚本
+    # 【中文注释】：执行 服务器 DNS 检测脚本
     bash <(curl -Ls https://raw.githubusercontent.com/shini74744/jj/refs/heads/main/dnsxz.sh)
-
-    # 如果是从菜单调用（没有额外参数），检测完返回主菜单
+    
+    # 【中文注释】：检查是否是作为非交互式命令调用的
+    # 如果 $# (参数个数) 为 0，说明是从菜单调用的，执行完后返回主菜单
     if [[ $# == 0 ]]; then
         before_show_menu
     fi
+    # 【中文注释】：如果参数个数不为 0 (例如 '0')，说明是命令行调用的，函数结束
 }
 
 show_usage() {
     echo -e "         ---------------------"
-    echo -e "         |${green}X-Panel 控制菜单用法 ${plain}|"
-    echo -e "         |  ${yellow}一个更好的面板   ${plain}|"
-    echo -e "         | ${yellow}基于Xray Core构建 ${plain}|"
+    echo -e "         |${green}X-Panel 控制菜单用法 ${plain}|${plain}"
+    echo -e "         |  ${yellow}一个更好的面板   ${plain}|${plain}"   
+    echo -e "         | ${yellow}基于Xray Core构建 ${plain}|${plain}"  
     echo -e "--------------------------------------------"
     echo -e "x-ui              - 进入管理脚本"
     echo -e "x-ui start        - 启动 X-Panel 面板"
@@ -2190,8 +2187,7 @@ ${green}1、探针地址：${yellow}https://shli.io${plain}
 ----------------------------------------------
 "
     show_status
-    echo
-    read -p "请输入数字选项 [0-28]: " num
+    echo && read -p "请输入数字选项 [0-28]: " num
 
     case "${num}" in
     0)
@@ -2332,14 +2328,12 @@ if [[ $# > 0 ]]; then
         check_install 0 && subconverter 0
         ;;
     "sshwifty")
-        check_install 0 && install_sshwifty 0
+        check_install 0 && install_sshwifty 0 
         ;;
     "dnscheck")
         check_install 0 && dns_check 0
-        ;;
-    *)
-        show_usage
-        ;;
+        ;;    
+    *) show_usage ;;
     esac
 else
     show_menu
