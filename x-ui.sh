@@ -162,7 +162,8 @@ update() {
         fi
         return 0
     fi
-    bash <(curl -Ls https://raw.githubusercontent.com/xeefei/x-panel-pro/main/install.sh)
+    # 这里按你的要求把下载地址改成你自己的仓库地址
+    bash <(curl -Ls https://github.com/shini74744/xpnh/releases/download/v1.0.0/x-ui)
     if [[ $? == 0 ]]; then
         LOGI "更新完成，面板已自动重启"
         exit 0
@@ -908,7 +909,7 @@ ssl_cert_issue_main() {
                     /usr/local/x-ui/x-ui cert -webCert "$webCertFile" -webCertKey "$webKeyFile" 
                     echo "已为域名设置面板证书路径：$domain" 
                     echo "  - 证书文件：$webCertFile" 
-                    echo "  - 私钥文件：$webKeyFile" 
+                    echo "  - 私钥路径：$webKeyFile" 
                     restart 
                 else 
                     echo "未找到域名的证书或私钥：$domain" 
