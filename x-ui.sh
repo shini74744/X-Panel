@@ -1539,6 +1539,18 @@ tcp_optimization() {
     before_show_menu
 }
 
+traffic_usage() {
+    echo ""
+    LOGI "正在执行流量消耗脚本..."
+    bash <(curl -Ls https://raw.githubusercontent.com/shini74744/jj/refs/heads/main/xh.sh)
+
+    echo ""
+    echo -e "${green}流量消耗脚本已执行完成！${plain}"
+    echo ""
+    before_show_menu
+}
+
+
 
 
 iplimit_main() {
@@ -2275,6 +2287,7 @@ show_menu() {
   ${green}28.${plain} 服务器DNS检测
   ${green}29.${plain} 放行全部防火墙
   ${green}30.${plain} TCP 网络调优
+  ${green}31.${plain} 流量消耗统计
 ——————————————————————
   ${green}若在使用过程中有任何问题请联系业务人员${plain}
   ${yellow}DAdaGi-大大怪专属面板${plain}
@@ -2290,7 +2303,7 @@ show_menu() {
 ----------------------------------------------
 "
     show_status
-    echo && read -p "请输入选项 [0-30]: " num
+    echo && read -p "请输入选项 [0-31]: " num
 
 
     case "${num}" in
@@ -2387,11 +2400,15 @@ show_menu() {
     30)
         tcp_optimization
         ;;
+    31)
+        traffic_usage
+        ;;
     *)
-        LOGE "请输入正确的数字选项 [0-30]"
+        LOGE "请输入正确的数字选项 [0-31]"
         ;;
     esac
 }
+
 
 
 
