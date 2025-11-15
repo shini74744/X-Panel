@@ -2291,7 +2291,7 @@ show_menu() {
 ——————————————————————
   ${green}若在使用过程中有任何问题请联系业务人员${plain}
   ${yellow}DAdaGi-大大怪专属面板${plain}
-  ${red}仅限项目内部流通 ${yellow}禁止外流${plain}
+  ${red}仅限项目内部流通 ${pink}禁止外流使用${plain}
   ${green}〔X-Panel面板〕项目地址${plain}
   ${yellow}https://github.com/xeefei/x-panel${plain}
   ${green}详细〔安装配置〕教程${plain}
