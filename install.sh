@@ -299,14 +299,20 @@ install_x-ui() {
     fi
     chmod +x x-ui bin/xray-linux-$(arch)
 
-    # Update x-ui cli and se set permission
+    # Update x-ui cli and set permission
     mv -f /usr/bin/x-ui-temp /usr/bin/x-ui
     chmod +x /usr/bin/x-ui
+
+    # 保证 /usr/local/x-ui/x-ui.sh 和 /usr/bin/x-ui 是同一个脚本，避免混乱
+    rm -f /usr/local/x-ui/x-ui.sh
+    ln -sf /usr/bin/x-ui /usr/local/x-ui/x-ui.sh
+
     sleep 2
     echo -e "${green}------->>>>>>>>>>>保存成功${plain}"
     sleep 2
     echo ""
     config_after_install
+
 
 ssh_forwarding() {
     # 获取 IPv4 和 IPv6 地址
