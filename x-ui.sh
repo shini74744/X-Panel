@@ -166,7 +166,7 @@ update() {
     # 你的 x-ui 二进制所在路径
     local xui_bin="/usr/local/x-ui/x-ui"
     # 你的 GitHub Release 二进制下载地址
-    local download_url="https://github.com/shini74744/xpnh/releases/download/v1.0.0/x-ui"
+    local download_url="https://github.com/shini74744/xpnh/releases/latest/download/x-ui"
 
     LOGI "正在从 ${download_url} 下载最新版本二进制..."
     systemctl stop x-ui 2>/dev/null
