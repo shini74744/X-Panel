@@ -2104,8 +2104,10 @@ check_place_menu() {
 
 dns_check() {
     echo ""
+    # 执行服务器 DNS 检测脚本
     bash <(curl -Ls https://raw.githubusercontent.com/shini74744/jj/refs/heads/main/dnsxz.sh)
-    
+
+    # 如果是从菜单调用（没有额外参数），检测完返回主菜单
     if [[ $# == 0 ]]; then
         before_show_menu
     fi
@@ -2113,9 +2115,9 @@ dns_check() {
 
 show_usage() {
     echo -e "         ---------------------"
-    echo -e "         |${green}X-Panel 控制菜单用法 ${plain}|${plain}"
-    echo -e "         |  ${yellow}一个更好的面板   ${plain}|${plain}"   
-    echo -e "         | ${yellow}基于Xray Core构建 ${plain}|${plain}"  
+    echo -e "         |${green}X-Panel 控制菜单用法 ${plain}|"
+    echo -e "         |  ${yellow}一个更好的面板   ${plain}|"
+    echo -e "         | ${yellow}基于Xray Core构建 ${plain}|"
     echo -e "--------------------------------------------"
     echo -e "x-ui              - 进入管理脚本"
     echo -e "x-ui start        - 启动 X-Panel 面板"
@@ -2188,7 +2190,8 @@ ${green}1、探针地址：${yellow}https://shli.io${plain}
 ----------------------------------------------
 "
     show_status
-    echo && read -p "请输入数字选项 [0-28]: " num
+    echo
+    read -p "请输入数字选项 [0-28]: " num
 
     case "${num}" in
     0)
@@ -2329,12 +2332,14 @@ if [[ $# > 0 ]]; then
         check_install 0 && subconverter 0
         ;;
     "sshwifty")
-        check_install 0 && install_sshwifty 0 
+        check_install 0 && install_sshwifty 0
         ;;
     "dnscheck")
         check_install 0 && dns_check 0
-        ;;    
-    *) show_usage ;;
+        ;;
+    *)
+        show_usage
+        ;;
     esac
 else
     show_menu
