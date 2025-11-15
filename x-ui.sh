@@ -38,10 +38,10 @@ echo -e "——————————————————————"
 echo -e "当前服务器的操作系统为:${red} $release${plain}"
 echo ""
 xui_version=$(/usr/local/x-ui/x-ui -v)
-last_version=$(curl -Ls "https://api.github.com/repos/xinsuiyuandong/x-panel/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-echo -e "${green}当前代理面板的版本为: ${red}〔X-Panel面板〕v${xui_version}${plain}"
+last_version=$(curl -Ls "https://api.github.com/repos/xeefei/x-panel-pro/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+echo -e "${green}当前代理面板的版本为: ${red}〔X-Panel 付费Pro版〕v${xui_version}${plain}"
 echo ""
-echo -e "${yellow}〔X-Panel面板〕最新版为---------->>> ${last_version}${plain}"
+echo -e "${yellow}〔X-Panel 付费Pro版〕最新版为---------->>> ${last_version}${plain}"
 
 os_version=$(grep -i version_id /etc/os-release | cut -d \" -f2 | cut -d . -f1)
 
@@ -143,7 +143,7 @@ before_show_menu() {
 }
 
 install() {
-    bash <(curl -Ls https://raw.githubusercontent.com/xinsuiyuandong/x-panel/main/install.sh)
+    bash <(curl -Ls https://raw.githubusercontent.com/xeefei/x-panel-pro/main/install.sh)
     if [[ $? == 0 ]]; then
         if [[ $# == 0 ]]; then
             start
@@ -162,7 +162,7 @@ update() {
         fi
         return 0
     fi
-    bash <(curl -Ls https://raw.githubusercontent.com/xinsuiyuandong/x-panel/main/install.sh)
+    bash <(curl -Ls https://raw.githubusercontent.com/xeefei/x-panel-pro/main/install.sh)
     if [[ $? == 0 ]]; then
         LOGI "更新完成，面板已自动重启"
         exit 0
@@ -180,7 +180,7 @@ update_menu() {
         return 0
     fi
     
-    wget --no-check-certificate -O /usr/bin/x-ui https://raw.githubusercontent.com/xinsuiyuandong/x-panel/main/x-ui.sh
+    wget --no-check-certificate -O /usr/bin/x-ui https://raw.githubusercontent.com/xeefei/x-panel-pro/main/x-ui.sh
     chmod +x /usr/local/x-ui/x-ui.sh
     chmod +x /usr/bin/x-ui
     
@@ -194,7 +194,7 @@ update_menu() {
 }
 
 custom_version() {
-    echo "输入面板版本 (例: 2.3.8):"
+    echo "输入面板版本 (例: v25.11.11):"
     read panel_version
 
     if [ -z "$panel_version" ]; then
@@ -202,12 +202,12 @@ custom_version() {
         exit 1
     fi
 
-    download_link="https://raw.githubusercontent.com/xinsuiyuandong/x-panel/master/install.sh"
+    download_link="https://raw.githubusercontent.com/xeefei/x-panel-pro/master/install.sh"
 
     # Use the entered panel version in the download link
     install_command="bash <(curl -Ls $download_link) v$panel_version"
 
-    echo "下载并安装面板版本 $panel_version..."
+    echo "下载并安装〔X-Panel 付费Pro版〕 $panel_version..."
     eval $install_command
 }
 
@@ -236,7 +236,7 @@ uninstall() {
     echo ""
     echo -e "卸载成功\n"
     echo "如果您需要再次安装此面板，可以使用以下命令:"
-    echo -e "${green}bash <(curl -Ls https://raw.githubusercontent.com/xinsuiyuandong/x-panel/master/install.sh)${plain}"
+    echo -e "${green}bash <(curl -Ls https://raw.githubusercontent.com/xeefei/x-panel-pro/master/install.sh)${plain}"
     echo ""
     # Trap the SIGTERM signal
     trap delete_script SIGTERM
@@ -559,7 +559,7 @@ enable_bbr() {
 }
 
 update_shell() {
-    wget -O /usr/bin/x-ui -N --no-check-certificate https://github.com/xinsuiyuandong/x-panel/raw/main/x-ui.sh
+    wget -O /usr/bin/x-ui -N --no-check-certificate https://github.com/xeefei/x-panel-pro/raw/main/x-ui.sh
     if [[ $? != 0 ]]; then
         echo ""
         LOGE "下载脚本失败，请检查机器是否可以连接至 GitHub"
@@ -1303,7 +1303,7 @@ echo -e "2. 自动调用面板的证书"
 echo -e "3. 自动部署 Sublink 服务"
 echo -e "4. 自动配置 Nginx 反向代理"
 echo -e "5. 可直观在前端页面配置订阅"
-echo -e "作者：〔X-Panel 面板〕专属定制"
+echo -e "作者：〔X-Panel 付费Pro版〕专属定制"
 echo -e "===============================================${plain}"
 echo ""
     local existing_cert=$(/usr/local/x-ui/x-ui setting -getCert true | grep -Eo 'cert: .+' | awk '{print $2}')
@@ -1346,7 +1346,6 @@ acme_path="/root/.acme.sh/${domain}_ecc"
 
 cp "${acme_path}/fullchain.cer" "/etc/nginx/ssl/${domain}.cer"
 cp "${acme_path}/${domain}.key" "/etc/nginx/ssl/${domain}.key"
-
 
 # --------- 配置 Nginx 反向代理 ----------
 NGINX_CONF="/etc/nginx/conf.d/sublink.conf"
@@ -1745,6 +1744,372 @@ iplimit_remove_conflicts() {
     done
 }
 
+# 【中文注释】：这是新添加的“网页版SSH工具”安装函数
+# 1. 自动从 GitHub API 获取最新版本
+# 2. 完整移植了 .go 文件中的 UFW、Nginx 和 systemd 逻辑
+install_sshwifty() {
+    echo "=== 开始安装 Sshwifty (网页版SSH) ==="
+    
+    # 0.a 提取 Go 里的域名获取逻辑
+    # 【中文注释】：首先检查面板是否已配置 SSL 证书，以便获取域名
+    local existing_cert=$(/usr/local/x-ui/x-ui setting -getCert true | grep -Eo 'cert: .+' | awk '{print $2}')
+    local existing_key=$(/usr/local/x-ui/x-ui setting -getCert true | grep -Eo 'key: .+' | awk '{print $2}')
+    local domain=""
+    local ACME_PATH=""
+
+    if [[ -n "$existing_cert" && -n "$existing_key" ]]; then
+        domain=$(basename "$(dirname "$existing_cert")")
+        # 【中文注释】：从 .go 文件中获取 acme 路径逻辑
+        ACME_PATH="/root/.acme.sh/${domain}_ecc"
+        LOGI "获取到用于 Nginx 配置的域名: ${domain}"
+        LOGI "将使用证书路径: ${ACME_PATH}"
+    else
+        LOGE "Sshwifty 安装失败：无法获取面板域名以配置 Nginx。"
+        LOGE "请先为面板申请 SSL 证书 (菜单项 18 或 19)。"
+        return 1 # 中止安装
+    fi
+    
+    # 【中文注释】：检查证书文件是否存在，这是 .go 文件中的关键检查
+    local CERT_FILE="${ACME_PATH}/fullchain.cer"
+    local KEY_FILE="${ACME_PATH}/${domain}.key"
+    if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
+        LOGE "⚠️ **警告：Nginx 配置失败**"
+        LOGE "错误: 找不到 Nginx 所需的 SSL 证书！"
+        LOGE "检查路径: ${CERT_FILE}"
+        LOGE "检查路径: ${KEY_FILE}"
+        LOGE "Sshwifty 服务将安装，但 Nginx 反代将失败。"
+        # 【中文注释】：我们继续安装，但 Nginx 会跳过
+    fi
+
+    # 0.b 提取 Go 里的 UFW (端口放行) 逻辑
+    LOGI "正在为 Sshwifty 服务配置防火墙..."
+    PORTS_TO_OPEN="8182 8188" # Sshwifty 自身端口和 Nginx 代理端口
+    DEFAULT_PORTS="22 80 443 13688 8443" # 面板运行所需的基础端口
+    
+    if ! command -v ufw &>/dev/null; then
+        LOGI "ufw 防火墙未安装，正在安装..."
+        DEBIAN_FRONTEND=noninteractive apt-get update -qq >/dev/null
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ufw >/dev/null
+        if [ $? -ne 0 ]; then LOGE "ufw 安装失败或权限不足。"; return 1; fi
+    fi
+
+    LOGI "正在检查并放行基础服务端口: $DEFAULT_PORTS"
+    for p in $DEFAULT_PORTS; do
+        if ! ufw status | grep -qw "$p/tcp"; then
+            LOGI "端口 $p/tcp 未放行，正在添加规则..."
+            ufw allow $p/tcp >/dev/null
+            if [ $? -ne 0 ]; then LOGE "ufw 端口 $p 放行失败。"; return 1; fi
+        fi
+    done
+    LOGI "基础服务端口检查完毕。"
+
+    LOGI "正在检查并放行 Sshwifty 服务端口: $PORTS_TO_OPEN"
+    for port in $PORTS_TO_OPEN; do
+        if ! ufw status | grep -qw "$port"; then
+            LOGI "正在执行 ufw allow $port..."
+            ufw allow $port >/dev/null
+            if [ $? -ne 0 ]; then LOGE "ufw 端口 $port 放行失败。"; return 1; fi
+        fi
+    done
+
+    if ! ufw status | grep -q "Status: active"; then
+        LOGI "ufw 状态：未激活。正在尝试激活..."
+        ufw --force enable
+        if [ $? -ne 0 ]; then LOGE "ufw 激活失败。"; return 1; fi
+    fi
+    LOGI "✅ 所有端口 ($DEFAULT_PORTS $PORTS_TO_OPEN) 已成功放行/检查。"
+
+    # --- 从这里开始是 Go 脚本中的 shellCommand ---
+    
+    # 0. 检查权限和停止旧服务
+    if [ "$EUID" -ne 0 ]; then
+        LOGE "致命错误：安装脚本必须以 root 权限运行！"
+        return 1
+    fi
+
+    if systemctl is-active --quiet sshwifty; then
+        LOGI "检测到正在运行的 Sshwifty 服务，正在停止..."
+        systemctl stop sshwifty
+    fi
+
+    # 1. 安装依赖
+    LOGI "正在安装依赖: curl, wget, tar, jq..."
+    # 【中文注释】：增加了 jq，用于更可靠地修改 json 配置文件
+    DEPENDENCIES="curl wget tar jq"
+    UNMET_DEPS=""
+    for dep in $DEPENDENCIES; do
+        if ! command -v $dep &>/dev/null; then 
+            UNMET_DEPS="$UNMET_DEPS $dep"
+        fi
+    done
+
+    if [ -n "$UNMET_DEPS" ]; then
+        LOGI "【发现缺失依赖】: $UNMET_DEPS，尝试自动安装..."
+        if command -v apt-get &>/dev/null; then
+        DEBIAN_FRONTEND=noninteractive apt-get update -qq >/dev/null
+            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq $UNMET_DEPS
+            if [ $? -ne 0 ]; then LOGE "错误：使用 apt-get 安装依赖 $UNMET_DEPS 失败！"; return 1; fi
+        elif command -v yum &>/dev/null; then
+            yum install -y -q $UNMET_DEPS
+            if [ $? -ne 0 ]; then LOGE "错误：使用 yum 安装依赖 $UNMET_DEPS 失败！"; return 1; fi
+        else
+            LOGE "致命错误: 无法自动安装依赖 ($UNMET_DEPS)。请手动安装后再试。"
+            return 1
+        fi
+    fi
+    LOGI "依赖检查与安装完成。"
+
+    # 1.b 安装 Nginx
+    if ! command -v nginx &>/dev/null; then
+        LOGI "未检测到 Nginx，正在安装..."
+        if command -v apt-get &>/dev/null; then
+            DEBIAN_FRONTEND=noninteractive apt-get update -qq >/dev/null
+            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nginx
+            if [ $? -ne 0 ]; then LOGE "错误：使用 apt-get 安装 Nginx 失败！"; return 1; fi
+        elif command -v yum &>/dev/null; then
+            yum install -y -q nginx
+            if [ $? -ne 0 ]; then LOGE "错误：使用 yum 安装 Nginx 失败！"; return 1; fi
+        else
+            LOGE "错误: 无法自动安装 nginx。请手动安装后再试。"
+            return 1
+        fi
+        systemctl enable nginx
+        systemctl start nginx
+    else
+        LOGI "检测到 Nginx 已安装，跳过安装步骤。"
+    fi
+
+    # 2. 【重大更新】：自动获取最新版本
+    LOGI "正在从 GitHub API 获取 Sshwifty 最新版本..."
+    DOWNLOAD_URL=$(curl -s "https://api.github.com/repos/nirui/sshwifty/releases/latest" | grep "browser_download_url" | grep "linux_amd64.tar.gz" | cut -d '"' -f 4 | head -n 1)
+
+    if [ -z "$DOWNLOAD_URL" ]; then
+        LOGE "致命错误: 无法自动获取最新的 Sshwifty 下载地址。"
+        LOGE "请检查您的 VPS 是否能访问 GitHub API (api.github.com)。"
+        return 1
+    fi
+    
+    FILENAME=$(basename "$DOWNLOAD_URL")
+    LOGI "获取到最新下载地址: $DOWNLOAD_URL"
+    TEMP_DIR="/tmp/sshwifty_install_$$"
+
+    # 3. 下载并解压
+    LOGI "正在下载 $FILENAME..."
+    rm -rf $TEMP_DIR
+    mkdir -p $TEMP_DIR
+    # 【中文注释】：使用 curl -fsL 替代 wget，-f 失败时静默退出，-s 静默，-L 跟随跳转
+    curl -fsL -o "$TEMP_DIR/$FILENAME" $DOWNLOAD_URL
+    if [ $? -ne 0 ]; then 
+        LOGE "致命错误: 下载 Sshwifty 失败！"
+        rm -rf $TEMP_DIR
+        return 1
+    fi
+
+    LOGI "正在解压文件..."
+    tar -xzvf "$TEMP_DIR/$FILENAME" -C $TEMP_DIR
+    if [ $? -ne 0 ]; then 
+        LOGE "致命错误: 解压 Sshwifty 失败。文件可能已损坏。"
+        rm -rf $TEMP_DIR
+        return 1
+    fi
+
+    # 4. 复制可执行文件并授权
+    INSTALL_PATH="/usr/local/bin/sshwifty"
+    LOGI "正在安装可执行文件到 $INSTALL_PATH..."
+    # 【中文注释】：在解压目录中查找可执行文件
+    BINARY_FILE=$(find $TEMP_DIR -type f \( -name "sshwifty_linux_amd64" -o -name "sshwifty" \) | head -n 1)
+
+    if [ ! -f "$BINARY_FILE" ]; then
+        LOGE "致命错误: 在解压目录中未找到 Sshwifty 可执行文件 ($TEMP_DIR)。"
+        rm -rf $TEMP_DIR
+        return 1
+    fi
+
+    cp "$BINARY_FILE" "$INSTALL_PATH"
+    chmod +x "$INSTALL_PATH"
+    LOGI "安装成功: $INSTALL_PATH"
+
+    # 5. 生成默认配置文件 (保留 IP 修复逻辑)
+    CONFIG_PATH="/etc/sshwifty.conf.json"
+    if [ ! -f "$CONFIG_PATH" ]; then
+        LOGI "正在创建默认配置文件: $CONFIG_PATH..."
+        # 【中文注释】：在解压目录中查找示例配置文件
+        EXAMPLE_CONFIG=$(find $TEMP_DIR -type f -name "*sshwifty.conf.example.json*" | head -n 1)
+        if [ -f "$EXAMPLE_CONFIG" ]; then
+            cp "$EXAMPLE_CONFIG" "$CONFIG_PATH"
+        else
+            # 【中文注释】：如果找不到，创建一个最小配置
+            cat <<EOF > $CONFIG_PATH
+{
+    "Host": "127.0.0.1", 
+    "Port": 8182,
+    "Debug": false,
+    "Title": "Sshwifty Web SSH"
+}
+EOF
+        fi
+        # 【中文注释】：确保 Host 正确设置为 127.0.0.1
+        jq '.Host = "127.0.0.1"' $CONFIG_PATH > $CONFIG_PATH.tmp && mv $CONFIG_PATH.tmp $CONFIG_PATH
+        LOGI "默认配置文件已创建并修正。"
+    else
+        LOGI "配置文件 $CONFIG_PATH 已存在，跳过创建。"
+        # 【中文注释】：确保 Host 正确设置为 127.0.0.1
+        jq '.Host = "127.0.0.1"' $CONFIG_PATH > $CONFIG_PATH.tmp && mv $CONFIG_PATH.tmp $CONFIG_PATH
+        LOGI "确保 $CONFIG_PATH 监听 127.0.0.1 (使用 jq)"
+    fi
+
+    # 6. 创建 systemd 服务文件
+    SERVICE_PATH="/etc/systemd/system/sshwifty.service"
+    LOGI "正在创建 systemd 服务: $SERVICE_PATH..."
+    cat <<EOF > $SERVICE_PATH
+[Unit]
+Description=Sshwifty - Web SSH Client
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=$INSTALL_PATH --config $CONFIG_PATH
+User=root
+Restart=on-failure
+RestartSec=5
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # 7. 重新加载、启用并启动服务
+    LOGI "正在配置 systemd 服务 (开机自启)..."
+    systemctl daemon-reload
+    systemctl enable sshwifty
+    systemctl restart sshwifty
+
+    # 8. 清理临时文件
+    LOGI "正在清理临时文件..."
+    rm -rf $TEMP_DIR
+
+    # 9. 检查服务状态
+    if ! systemctl is-active --quiet sshwifty; then
+        LOGE "致命错误: Sshwifty 服务启动失败！请检查 8182 端口是否被占用，或查看以下日志："
+        journalctl -u sshwifty -n 20 --no-pager
+        return 1
+    fi
+    LOGI "✅ Sshwifty (8182 端口) 启动成功。"
+
+    # 10. 配置 Nginx 反向代理
+    LOGI "=== 开始配置 Nginx 反向代理 (8188 -> 8182) ==="
+    DOMAIN="${domain}" # <--- 这里使用我们之前获取的变量
+
+    if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
+        LOGE "⚠️ **警告：Nginx 配置跳过**"
+        LOGE "错误: 找不到 Nginx 所需的 SSL 证书！Sshwifty 服务已运行在 127.0.0.1:8182。"
+    else
+        # 【中文注释】：移植 Go 代码中的证书复制逻辑
+        mkdir -p /etc/nginx/ssl
+        cp "${CERT_FILE}" "/etc/nginx/ssl/${DOMAIN}.cer"
+        cp "${KEY_FILE}" "/etc/nginx/ssl/${DOMAIN}.key"
+
+        cat > /etc/nginx/conf.d/sshwifty-proxy.conf <<EOF
+# --- Sshwifty (Web SSH) 反向代理配置 ---
+server {
+    listen 8188 ssl http2;
+    server_name ${DOMAIN};
+    # 【中文注释】：使用复制后的证书路径
+    ssl_certificate       /etc/nginx/ssl/${DOMAIN}.cer;
+    ssl_certificate_key /etc/nginx/ssl/${DOMAIN}.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    location / {
+        proxy_pass http://127.0.0.1:8182;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    }
+}
+EOF
+        LOGI "正在重载 Nginx..."
+        if ! systemctl reload nginx; then
+            LOGE "错误: Nginx 重载失败。请检查配置。"
+        fi
+        LOGI "✅ Nginx 反向代理配置成功。"
+    fi
+
+    LOGI "=== Sshwifty 安装并启动成功! ==="
+    
+    # 【中文注释】：安装完成后向用户显示最终访问信息
+    echo ""
+    echo -e "${green}🎉 恭喜！【网页版SSH】模块已成功安装！${plain}"
+    echo ""
+    echo -e "${green}已自动为您配置 Nginx 反向代理。${plain}"
+    echo ""
+    echo -e "${green}您现在可以使用以下地址访问 Web 界面：${plain}"
+    echo ""
+    echo -e "🔗 ${yellow}登录地址: https://${DOMAIN}:8188${plain}"
+    echo ""
+    echo -e "${green}默认登录口令为： ${yellow}WEB_ACCESS_PASSWORD${plain}"
+    echo ""
+    echo -e "${green}(如果无法登录，请在 /etc/sshwifty.conf.json 中查看或设置口令)${plain}"
+    echo ""
+    
+    before_show_menu
+}
+
+# 【中文注释】：这是新添加的“线路和IP检测”相关函数
+ip_check() {
+    # 【中文注释】：功能 1：检测 IP
+    bash <(curl -Ls https://Check.Place) -I
+    before_show_menu
+}
+
+route_check() {
+    # 【中文注释】：功能 2：检测线路
+    bash <(curl -Ls https://Check.Place) -N
+    before_show_menu
+}
+
+check_place_menu() {
+    # 【中文注释】：这是选项 27 的子菜单
+    echo -e "
+  ${green}线路和IP检测 (Check.Place)${plain}
+  
+  ${green}1.${plain} 检测 IP 质量
+  ${green}2.${plain} 检测 线路/路由
+  ——————————————————————
+  ${green}0.${plain} 返回主菜单
+  "
+    read -p "请输入选项 [0-2]: " num
+    case "${num}" in
+    0)
+        show_menu
+        ;;
+    1)
+        ip_check
+        ;;
+    2)
+        route_check
+        ;;
+    *)
+        LOGE "请输入正确的数字选项 [0-2]!"
+        ;;
+    esac
+}
+
+# 【中文注释】：这是新添加的“服务器DNS检测”函数
+dns_check() {
+    echo ""
+    # 【中文注释】：执行 服务器 DNS 检测脚本
+    bash <(curl -Ls https://raw.githubusercontent.com/shini74744/jj/refs/heads/main/dnsxz.sh)
+    
+    # 【中文注释】：检查是否是作为非交互式命令调用的
+    # 如果 $# (参数个数) 为 0，说明是从菜单调用的，执行完后返回主菜单
+    if [[ $# == 0 ]]; then
+        before_show_menu
+    fi
+    # 【中文注释】：如果参数个数不为 0 (例如 '0')，说明是命令行调用的，函数结束
+}
+
 show_usage() {
     echo -e "         ---------------------"
     echo -e "         |${green}X-Panel 控制菜单用法 ${plain}|${plain}"
@@ -1805,16 +2170,33 @@ show_menu() {
   ${green}22.${plain} 启用 BBR 
   ${green}23.${plain} 更新 Geo 文件
   ${green}24.${plain} Speedtest by Ookla
-  ${green}25.${plain} 安装订阅转换 
+  ${green}25.${plain} 安装订阅转换
+  ${green}26.${plain} 网页版SSH工具
+  ${green}27.${plain} 线路和IP检测
+  ${green}28.${plain} 服务器DNS检测
 ——————————————————————
-内部版本 禁止外流
+  ${green}若在使用过程中有任何问题${plain}
+  ${yellow}请加入〔X-Panel面板〕交流群${plain}
+  ${red}https://t.me/XUI_CN ${yellow}截图进行反馈${plain}
+  ${green}〔X-Panel面板〕项目地址${plain}
+  ${yellow}https://github.com/xeefei/x-panel${plain}
+  ${green}详细〔安装配置〕教程${plain}
+  ${yellow}https://xeefei.blogspot.com/2025/09/x-panel.html${plain}
 ——————————————————————
 
 -------------->>>>>>>赞 助 推 广 区<<<<<<<<-------------------
 
-${green}1、探针地址：${yellow}https://shli.io${plain}
+${green}1、搬瓦工GIA高端线路：${yellow}https://bandwagonhost.com/aff.php?aff=75015${plain}
 
+${green}2、Dmit高端GIA线路：${yellow}https://www.dmit.io/aff.php?aff=9326${plain}
 
+${green}3、Sharon亚太优化线路机：${yellow}https://gomami.io/aff.php?aff=174${plain}
+
+${green}4、Bagevm优质落地鸡（原生IP全解锁）：${yellow}https://www.bagevm.com/aff.php?aff=754${plain}
+
+${green}5、白丝云〔4837线路〕实惠量大管饱：${yellow}https://cloudsilk.io/aff.php?aff=706${plain}
+
+${green}6、RackNerd极致性价比机器：${yellow}https://my.racknerd.com/aff.php?aff=15268&pid=912${plain}
 
 ----------------------------------------------
 "
@@ -1900,8 +2282,17 @@ ${green}1、探针地址：${yellow}https://shli.io${plain}
     25)
         subconverter
         ;;
+    26)
+        check_install && install_sshwifty
+        ;;
+    27)
+        check_install && check_place_menu
+        ;;
+    28)
+        check_install && dns_check
+        ;;
     *)
-        LOGE "请输入正确的数字选项 [0-25]"
+        LOGE "请输入正确的数字选项 [0-28]"
         ;;
     esac
 }
@@ -1949,6 +2340,12 @@ if [[ $# > 0 ]]; then
         ;;
     "subconverter")
         check_install 0 && subconverter 0
+        ;;
+    "sshwifty")
+        check_install 0 && install_sshwifty 0 
+        ;;
+    "dnscheck")
+        check_install 0 && dns_check 0
         ;;    
     *) show_usage ;;
     esac
