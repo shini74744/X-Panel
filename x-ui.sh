@@ -162,13 +162,43 @@ update() {
         fi
         return 0
     fi
-    # 这里按你的要求把下载地址改成你自己的仓库地址
-    bash <(curl -Ls https://github.com/shini74744/xpnh/releases/download/v1.0.0/x-ui)
-    if [[ $? == 0 ]]; then
+
+    # 你的 x-ui 二进制所在路径
+    local xui_bin="/usr/local/x-ui/x-ui"
+    # 你的 GitHub Release 二进制下载地址
+    local download_url="https://github.com/shini74744/xpnh/releases/download/v1.0.0/x-ui"
+
+    LOGI "正在从 ${download_url} 下载最新版本二进制..."
+    systemctl stop x-ui 2>/dev/null
+
+    # 先下载到临时文件，防止下载失败把旧文件覆盖坏
+    curl -L -o "${xui_bin}.tmp" "${download_url}"
+    if [[ $? -ne 0 ]]; then
+        LOGE "下载新版本失败，请检查网络或 GitHub 地址"
+        rm -f "${xui_bin}.tmp"
+        if [[ $# == 0 ]]; then
+            before_show_menu
+        fi
+        return 1
+    fi
+
+    # 覆盖原二进制，赋予执行权限
+    mv "${xui_bin}.tmp" "${xui_bin}"
+    chmod +x "${xui_bin}"
+
+    systemctl restart x-ui
+    if [[ $? -eq 0 ]]; then
         LOGI "更新完成，面板已自动重启"
         exit 0
+    else
+        LOGE "更新后重启面板失败，请手动检查 x-ui 服务状态"
+        if [[ $# == 0 ]]; then
+            before_show_menu
+        fi
+        return 1
     fi
 }
+
 
 update_menu() {
     echo -e "${yellow}更新菜单项${plain}"
