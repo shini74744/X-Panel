@@ -1472,6 +1472,74 @@ run_speedtest() {
     speedtest
 }
 
+open_all_firewall() {
+    echo ""
+    LOGI "正在根据系统类型放行全部防火墙规则..."
+
+    case "${release}" in
+    ubuntu|debian|armbian)
+        if command -v ufw &>/dev/null; then
+            LOGI "检测到 UFW 防火墙，正在关闭..."
+            ufw --force disable >/dev/null 2>&1
+            LOGI "UFW 防火墙已关闭，所有端口默认放行。"
+        else
+            LOGI "未检测到 UFW，改用 iptables 放行全部端口..."
+            iptables -P INPUT ACCEPT  >/dev/null 2>&1
+            iptables -P FORWARD ACCEPT >/dev/null 2>&1
+            iptables -P OUTPUT ACCEPT >/dev/null 2>&1
+            iptables -F >/dev/null 2>&1
+            LOGI "iptables 已放行全部端口。"
+        fi
+        ;;
+    centos|almalinux|rocky|oracle|fedora)
+        if systemctl list-unit-files | grep -q firewalld; then
+            LOGI "检测到 firewalld，正在停止并禁用..."
+            systemctl stop firewalld >/dev/null 2>&1
+            systemctl disable firewalld >/dev/null 2>&1
+            LOGI "firewalld 已停止并禁用，所有端口默认放行。"
+        else
+            LOGI "未检测到 firewalld，改用 iptables 放行全部端口..."
+            iptables -P INPUT ACCEPT  >/dev/null 2>&1
+            iptables -P FORWARD ACCEPT >/dev/null 2>&1
+            iptables -P OUTPUT ACCEPT >/dev/null 2>&1
+            iptables -F >/dev/null 2>&1
+            LOGI "iptables 已放行全部端口。"
+        fi
+        ;;
+    arch|manjaro|alpine|opensuse*|*)
+        LOGI "使用 iptables 放行全部端口..."
+        iptables -P INPUT ACCEPT  >/dev/null 2>&1
+        iptables -P FORWARD ACCEPT >/dev/null 2>&1
+        iptables -P OUTPUT ACCEPT >/dev/null 2>&1
+        iptables -F >/dev/null 2>&1
+        LOGI "iptables 已放行全部端口。"
+        ;;
+    esac
+
+    echo ""
+    echo -e "${green}放行全部防火墙规则已执行完成！${plain}"
+    echo ""
+    before_show_menu
+}
+
+tcp_optimization() {
+    echo ""
+    LOGI "正在执行 TCP 网络调优脚本..."
+    bash <(curl -sL https://raw.githubusercontent.com/yahuisme/network-optimization/main/script.sh)
+
+    if [[ $? -eq 0 ]]; then
+        echo ""
+        echo -e "${green}TCP 网络调优脚本执行成功！${plain}"
+    else
+        echo ""
+        LOGE "TCP 网络调优脚本执行失败，请检查网络或脚本地址。"
+    fi
+
+    echo ""
+    before_show_menu
+}
+
+
 
 iplimit_main() {
     echo -e "\n${green}\t1.${plain} 安装 Fail2ban 并配置 IP 限制"
@@ -2167,7 +2235,7 @@ show_usage() {
 show_menu() {
     echo -e "
 ——————————————————————
-  ${green}X-Panel 面板管理脚本${plain}
+  ${green}大大怪 面板管理脚本${plain}
   ${yellow}  一个更好的面板${plain}
   ${yellow} 基于Xray Core构建${plain}
 ——————————————————————
@@ -2205,10 +2273,12 @@ show_menu() {
   ${green}26.${plain} 网页版SSH工具
   ${green}27.${plain} 线路和IP检测
   ${green}28.${plain} 服务器DNS检测
+  ${green}29.${plain} 放行全部防火墙
+  ${green}30.${plain} TCP 网络调优
 ——————————————————————
-  ${green}若在使用过程中有任何问题${plain}
-  ${yellow}请加入〔X-Panel面板〕交流群${plain}
-  ${red}https://t.me/XUI_CN ${yellow}截图进行反馈${plain}
+  ${green}若在使用过程中有任何问题请联系业务人员${plain}
+  ${yellow}DAdaGi-大大怪专属面板${plain}
+  ${red}仅限项目内部流通 ${yellow}禁止外流${plain}
   ${green}〔X-Panel面板〕项目地址${plain}
   ${yellow}https://github.com/xeefei/x-panel${plain}
   ${green}详细〔安装配置〕教程${plain}
@@ -2216,11 +2286,12 @@ show_menu() {
 ——————————————————————
 
   ${green}探针监控面板地址${plain}
-  ${yellow}https://nmsl.ma${plain}
+  ${red}https://nmsl.ma${plain}
 ----------------------------------------------
 "
     show_status
-    echo && read -p "请输入选项 [0-28]: " num
+    echo && read -p "请输入选项 [0-30]: " num
+
 
     case "${num}" in
     0)
@@ -2310,11 +2381,18 @@ show_menu() {
     28)
         check_install && dns_check
         ;;
+    29)
+        open_all_firewall
+        ;;
+    30)
+        tcp_optimization
+        ;;
     *)
-        LOGE "请输入正确的数字选项 [0-28]"
+        LOGE "请输入正确的数字选项 [0-30]"
         ;;
     esac
 }
+
 
 
 if [[ $# > 0 ]]; then
