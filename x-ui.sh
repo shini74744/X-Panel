@@ -189,7 +189,13 @@ update() {
     systemctl restart x-ui
     if [[ $? -eq 0 ]]; then
         LOGI "更新完成，面板已自动重启"
-        exit 0
+        if [[ $# == 0 ]]; then
+            # 从菜单里按 2 进来的：更新完提示回主菜单
+            before_show_menu
+        else
+            # 从命令行 x-ui update 调用：更新完直接退出
+            exit 0
+        fi
     else
         LOGE "更新后重启面板失败，请手动检查 x-ui 服务状态"
         if [[ $# == 0 ]]; then
@@ -198,6 +204,7 @@ update() {
         return 1
     fi
 }
+
 
 
 update_menu() {
