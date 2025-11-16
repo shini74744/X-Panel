@@ -590,15 +590,16 @@ enable_bbr() {
 }
 
 update_shell() {
-    # ★ 要从你自己的仓库拉最新的 x-ui.sh，就改这里的地址 ★
+update_shell() {
+    # ★ 这里就是你的“调出命令脚本”的来源地址（你 GitHub 上的 x-ui.sh）★
     local url="https://raw.githubusercontent.com/shini74744/X-Panel/master/x-ui.sh"
     local tmpfile
 
     tmpfile=$(mktemp)
 
-    LOGI "正在从 GitHub 获取最新 x-ui.sh 脚本..."
+    LOGI "正在从 GitHub 获取最新 x-ui 脚本..."
 
-    # 下载最新脚本到临时文件
+    # 1. 先下载到临时文件
     if ! curl -fsSL "$url" -o "$tmpfile"; then
         LOGE "下载最新脚本失败，请检查网络或 GitHub 访问情况。"
         rm -f "$tmpfile"
@@ -611,25 +612,21 @@ update_shell() {
 
     chmod +x "$tmpfile"
 
-    # 1）覆盖 /usr/bin/x-ui （终端里直接敲 x-ui 用的）
+    # 2. 覆盖真正的调出命令脚本 /usr/bin/x-ui
     install -m 755 "$tmpfile" /usr/bin/x-ui
-
-    # 2）覆盖 /usr/local/x-ui/x-ui.sh （面板目录里的那个）
-    if [[ -d /usr/local/x-ui ]]; then
-        install -m 755 "$tmpfile" /usr/local/x-ui/x-ui.sh
-    fi
 
     rm -f "$tmpfile"
 
-    LOGI "x-ui 脚本已更新到最新版本：/usr/bin/x-ui 和 /usr/local/x-ui/x-ui.sh"
+    LOGI "x-ui 调出命令脚本(/usr/bin/x-ui) 已更新为最新版本"
 
-    # 如果是从菜单里点“更新脚本”，更新完就退出，让你重新执行一次 x-ui
+    # 如果是从菜单里调用（没有参数），更新完就退出，让你重新执行一次 x-ui
     if [[ $# == 0 ]]; then
         echo
         LOGI "脚本已更新，建议退出后重新执行 x-ui 再继续使用。"
         exit 0
     fi
 }
+
 
 
 # 0: running, 1: not running, 2: not installed
