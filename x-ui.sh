@@ -38,7 +38,7 @@ echo -e "——————————————————————"
 echo -e "当前服务器的操作系统为:${red} $release${plain}"
 echo ""
 xui_version=$(/usr/local/x-ui/x-ui -v)
-last_version=$(curl -Ls "https://api.github.com/repos/xeefei/x-panel-pro/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+last_version=$(curl -Ls "https://api.github.com/repos/shini74744/xpnh/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 echo -e "${green}当前代理面板的版本为: ${red}〔DAdaGI- 专属面板〕v${xui_version}${plain}"
 echo ""
 echo -e "${yellow}〔DAdaGI- 专属面板〕最新版为---------->>> ${last_version}${plain}"
@@ -596,7 +596,7 @@ update_shell() {
 
     tmpfile=$(mktemp)
 
-    LOGI "正在从 ${url} 获取最新 x-ui 脚本..."
+    LOGI "莫慌哎呀！正在检查脚本儿更新..."
 
     if ! curl -fsSL "$url" -o "$tmpfile"; then
         LOGE "下载最新脚本失败，继续使用当前版本"
@@ -612,7 +612,7 @@ update_shell() {
 
     rm -f "$tmpfile"
 
-    LOGI "脚本已自动更新到最新版本（覆盖 /usr/local/x-ui/x-ui.sh 与 /usr/bin/x-ui）"
+    LOGI "脚本已自动更新,来嘛！用嘛！！！"
 }
 
 # 0: running, 1: not running, 2: not installed
