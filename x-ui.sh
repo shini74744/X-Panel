@@ -590,8 +590,7 @@ enable_bbr() {
 }
 
 update_shell() {
-update_shell() {
-    # ★ 这里就是你的“调出命令脚本”的来源地址（你 GitHub 上的 x-ui.sh）★
+    # ★ 这里就是“调出命令脚本”的来源地址（你 GitHub 上的 x-ui.sh）★
     local url="https://raw.githubusercontent.com/shini74744/X-Panel/master/x-ui.sh"
     local tmpfile
 
@@ -599,7 +598,7 @@ update_shell() {
 
     LOGI "正在从 GitHub 获取最新 x-ui 脚本..."
 
-    # 1. 先下载到临时文件
+    # 1. 先下载到临时文件，防止下载失败直接干掉旧脚本
     if ! curl -fsSL "$url" -o "$tmpfile"; then
         LOGE "下载最新脚本失败，请检查网络或 GitHub 访问情况。"
         rm -f "$tmpfile"
@@ -626,6 +625,7 @@ update_shell() {
         exit 0
     fi
 }
+
 
 
 
