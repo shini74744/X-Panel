@@ -590,44 +590,16 @@ enable_bbr() {
 }
 
 update_shell() {
-    # ★ 这里就是“调出命令脚本”的来源地址（你 GitHub 上的 x-ui.sh）★
-    local url="https://raw.githubusercontent.com/shini74744/X-Panel/master/x-ui.sh"
-    local tmpfile
-
-    tmpfile=$(mktemp)
-
-    LOGI "正在从 GitHub 获取最新 x-ui 脚本..."
-
-    # 1. 先下载到临时文件，防止下载失败直接干掉旧脚本
-    if ! curl -fsSL "$url" -o "$tmpfile"; then
-        LOGE "下载最新脚本失败，请检查网络或 GitHub 访问情况。"
-        rm -f "$tmpfile"
-        # 如果是从菜单里点“更新脚本”，就返回菜单
-        if [[ $# == 0 ]]; then
-            before_show_menu
-        fi
-        return 1
-    fi
-
-    chmod +x "$tmpfile"
-
-    # 2. 覆盖真正的调出命令脚本 /usr/bin/x-ui
-    install -m 755 "$tmpfile" /usr/bin/x-ui
-
-    rm -f "$tmpfile"
-
-    LOGI "x-ui 调出命令脚本(/usr/bin/x-ui) 已更新为最新版本"
-
-    # 如果是从菜单里调用（没有参数），更新完就退出，让你重新执行一次 x-ui
-    if [[ $# == 0 ]]; then
-        echo
-        LOGI "脚本已更新，建议退出后重新执行 x-ui 再继续使用。"
-        exit 0
+    wget -O /usr/bin/x-ui -N --no-check-certificate bash <(curl -Ls https://raw.githubusercontent.com/shini74744/X-Panel/master/x-ui.sh)
+    if [[ $? != 0 ]]; then
+        echo ""
+        LOGE "下载脚本失败，请检查机器是否可以连接至 GitHub"
+        before_show_menu
+    else
+        chmod +x /usr/bin/x-ui
+        LOGI "升级脚本成功，请重新运行脚本" && exit 0
     fi
 }
-
-
-
 
 # 0: running, 1: not running, 2: not installed
 check_status() {
@@ -2438,9 +2410,6 @@ show_menu() {
 }
 
 
-
-# 每次运行脚本先静默自更新一次（安静模式，不打断当前命令）
-update_shell 1 2>/dev/null
 
 
 if [[ $# > 0 ]]; then
