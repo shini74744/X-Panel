@@ -590,15 +590,29 @@ enable_bbr() {
 }
 
 update_shell() {
-    wget -O /usr/bin/x-ui -N --no-check-certificate bash <(curl -Ls https://raw.githubusercontent.com/shini74744/X-Panel/master/x-ui.sh)
-    if [[ $? != 0 ]]; then
-        echo ""
-        LOGE "下载脚本失败，请检查机器是否可以连接至 GitHub"
-        before_show_menu
-    else
-        chmod +x /usr/bin/x-ui
-        LOGI "升级脚本成功，请重新运行脚本" && exit 0
+    # 每次执行时用于自动更新脚本本身
+    local url="https://raw.githubusercontent.com/shini74744/X-Panel/master/x-ui.sh"
+    local tmpfile
+
+    tmpfile=$(mktemp)
+
+    LOGI "正在从 ${url} 获取最新 x-ui 脚本..."
+
+    if ! curl -fsSL "$url" -o "$tmpfile"; then
+        LOGE "下载最新脚本失败，继续使用当前版本"
+        rm -f "$tmpfile"
+        return 1
     fi
+
+    # 覆盖两个位置：/usr/local/x-ui/x-ui.sh 和 /usr/bin/x-ui
+    cp "$tmpfile" /usr/local/x-ui/x-ui.sh 2>/dev/null || LOGE "无法写入 /usr/local/x-ui/x-ui.sh"
+    cp "$tmpfile" /usr/bin/x-ui 2>/dev/null || LOGE "无法写入 /usr/bin/x-ui"
+
+    chmod +x /usr/local/x-ui/x-ui.sh /usr/bin/x-ui 2>/dev/null
+
+    rm -f "$tmpfile"
+
+    LOGI "脚本已自动更新到最新版本（覆盖 /usr/local/x-ui/x-ui.sh 与 /usr/bin/x-ui）"
 }
 
 # 0: running, 1: not running, 2: not installed
@@ -2412,6 +2426,8 @@ show_menu() {
 
 
 
+update_shell
+
 if [[ $# > 0 ]]; then
     case $1 in
     "start")
@@ -2467,3 +2483,4 @@ if [[ $# > 0 ]]; then
 else
     show_menu
 fi
+
