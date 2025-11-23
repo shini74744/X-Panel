@@ -40,25 +40,15 @@ arch() {
 }
 
 echo ""
-# check_glibc_version() {
-#    glibc_version=$(ldd --version | head -n1 | awk '{print $NF}')
-
-#    required_version="2.32"
-#    if [[ "$(printf '%s\n' "$required_version" "$glibc_version" | sort -V | head -n1)" != "$required_version" ]]; then
-#        echo -e "${red}------>>>GLIBC版本 $glibc_version 太旧了！ 要求2.32或以上版本${plain}"
-#        echo -e "${green}-------->>>>请升级到较新版本的操作系统以便获取更高版本的GLIBC${plain}"
-#        exit 1
-#    fi
-#        echo -e "${green}-------->>>>GLIBC版本： $glibc_version（符合高于2.32的要求）${plain}"
-# }
-# check_glibc_version
-
-# echo ""
+# echo -e "GLIBC 检查已注释，如需要可自行开启"
 echo -e "${yellow}---------->>>>>当前系统的架构为: $(arch)${plain}"
 echo ""
-last_version=$(curl -Ls "https://api.github.com/repos/xinsuiyuandong/x-panel/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+
+# 获取最新版本号（仅用于显示）
+last_version=$(curl -Ls "https://api.github.com/repos/shini74744/xpnh/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+
 # 获取 x-ui 版本
-xui_version=$(/usr/local/x-ui/x-ui -v)
+xui_version=$(/usr/local/x-ui/x-ui -v 2>/dev/null)
 
 # 检查 xui_version 是否为空
 if [[ -z "$xui_version" ]]; then
@@ -77,7 +67,7 @@ else
     fi
 fi
 echo ""
-echo -e "${yellow}---------------------->>>>>〔X-Panel面板〕最新版为：${last_version}${plain}"
+echo -e "${yellow}---------------------->>>>>〔X-Panel面板〕xpnh 仓库最新版为：${last_version}${plain}"
 sleep 4
 
 os_version=$(grep -i version_id /etc/os-release | cut -d \" -f2 | cut -d . -f1)
@@ -136,7 +126,6 @@ else
     echo "- Oracle Linux 8+"
     echo "- OpenSUSE Tumbleweed"
     exit 1
-
 fi
 
 install_base() {
@@ -171,7 +160,7 @@ gen_random_string() {
     echo "$random_string"
 }
 
-# This function will be called when user installed x-ui out of security
+# 安装/更新后配置
 config_after_install() {
     echo -e "${yellow}安装/更新完成！ 为了您的面板安全，建议修改面板设置 ${plain}"
     echo ""
@@ -225,101 +214,13 @@ config_after_install() {
     /usr/local/x-ui/x-ui migrate
 }
 
-echo ""
-install_x-ui() {
-    cd /usr/local/
-
-    # Download resources
-    if [ $# == 0 ]; then
-        last_version=$(curl -Ls "https://api.github.com/repos/xinsuiyuandong/x-panel/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-        if [[ ! -n "$last_version" ]]; then
-            echo -e "${red}获取 X-Panel 版本失败，可能是 Github API 限制，请稍后再试${plain}"
-            exit 1
-        fi
-        echo ""
-        echo -e "-----------------------------------------------------"
-        echo -e "${green}--------->>获取 X-Panel 最新版本：${yellow}${last_version}${plain}${green}，开始安装...${plain}"
-        echo -e "-----------------------------------------------------"
-        echo ""
-        sleep 2
-        echo -e "${green}---------------->>>>>>>>>安装进度50%${plain}"
-        sleep 3
-        echo ""
-        echo -e "${green}---------------->>>>>>>>>>>>>>>>>>>>>安装进度100%${plain}"
-        echo ""
-        sleep 2
-        wget -N --no-check-certificate -O /usr/local/x-ui-linux-$(arch).tar.gz https://github.com/xinsuiyuandong/x-panel/releases/download/${last_version}/x-ui-linux-$(arch).tar.gz
-        if [[ $? -ne 0 ]]; then
-            echo -e "${red}下载 X-Panel 失败, 请检查服务器是否可以连接至 GitHub？ ${plain}"
-            exit 1
-        fi
-    else
-        last_version=$1
-        url="https://github.com/xinsuiyuandong/x-panel/releases/download/${last_version}/x-ui-linux-$(arch).tar.gz"
-        echo ""
-        echo -e "--------------------------------------------"
-        echo -e "${green}---------------->>>>开始安装 X-Panel $1${plain}"
-        echo -e "--------------------------------------------"
-        echo ""
-        sleep 2
-        echo -e "${green}---------------->>>>>>>>>安装进度50%${plain}"
-        sleep 3
-        echo ""
-        echo -e "${green}---------------->>>>>>>>>>>>>>>>>>>>>安装进度100%${plain}"
-        echo ""
-        sleep 2
-        wget -N --no-check-certificate -O /usr/local/x-ui-linux-$(arch).tar.gz ${url}
-        if [[ $? -ne 0 ]]; then
-            echo -e "${red}下载 X-Panel $1 失败, 请检查此版本是否存在 ${plain}"
-            exit 1
-        fi
-    fi
-    wget -O /usr/bin/x-ui-temp https://raw.githubusercontent.com/shini74744/X-Panel/main/x-ui.sh
-
-    # Stop x-ui service and remove old resources
-    if [[ -e /usr/local/x-ui/ ]]; then
-        systemctl stop x-ui
-        rm /usr/local/x-ui/ -rf
-    fi
-    
-    sleep 3
-    echo -e "${green}------->>>>>>>>>>>检查并保存安装目录${plain}"
-    echo ""
-    tar zxvf x-ui-linux-$(arch).tar.gz
-    rm x-ui-linux-$(arch).tar.gz -f
-    
-    cd x-ui
-    chmod +x x-ui
-    chmod +x x-ui.sh
-
-    # Check the system's architecture and rename the file accordingly
-    if [[ $(arch) == "armv5" || $(arch) == "armv6" || $(arch) == "armv7" ]]; then
-        mv bin/xray-linux-$(arch) bin/xray-linux-arm
-        chmod +x bin/xray-linux-arm
-    fi
-    chmod +x x-ui bin/xray-linux-$(arch)
-
-    # Update x-ui cli and set permission
-    mv -f /usr/bin/x-ui-temp /usr/bin/x-ui
-    chmod +x /usr/bin/x-ui
-
-    # 保证 /usr/local/x-ui/x-ui.sh 和 /usr/bin/x-ui 是同一个脚本，避免混乱
-    rm -f /usr/local/x-ui/x-ui.sh
-    ln -sf /usr/bin/x-ui /usr/local/x-ui/x-ui.sh
-
-    sleep 2
-    echo -e "${green}------->>>>>>>>>>>保存成功${plain}"
-    sleep 2
-    echo ""
-    config_after_install
-
-
+# ssh 转发提示
 ssh_forwarding() {
     # 获取 IPv4 和 IPv6 地址
     v4=$(curl -s4m8 http://ip.sb -k)
     v6=$(curl -s6m8 http://ip.sb -k)
-    local existing_webBasePath=$(/usr/local/x-ui/x-ui setting -show true | grep -Eo 'webBasePath（访问路径）: .+' | awk '{print $2}') 
-    local existing_port=$(/usr/local/x-ui/x-ui setting -show true | grep -Eo 'port（端口号）: .+' | awk '{print $2}') 
+    local existing_webBasePath=$(/usr/local/x-ui/x-ui setting -show true | grep -Eo 'webBasePath（访问路径）: .+' | awk '{print $2}')
+    local existing_port=$(/usr/local/x-ui/x-ui setting -show true | grep -Eo 'port（端口号）: .+' | awk '{print $2}')
     local existing_cert=$(/usr/local/x-ui/x-ui setting -getCert true | grep -Eo 'cert: .+' | awk '{print $2}')
     local existing_key=$(/usr/local/x-ui/x-ui setting -getCert true | grep -Eo 'key: .+' | awk '{print $2}')
 
@@ -372,13 +273,98 @@ ssh_forwarding() {
         fi
     fi
 }
-# 执行ssh端口转发
-ssh_forwarding
 
-    cp -f x-ui.service /etc/systemd/system/
+echo ""
+install_x-ui() {
+    cd /usr/local/
+
+    # Download resources
+    if [ $# == 0 ]; then
+        # 再获取一次最新版（主要用于显示）
+        last_version=$(curl -Ls "https://api.github.com/repos/shini74744/xpnh/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+        if [[ ! -n "$last_version" ]]; then
+            echo -e "${red}获取 X-Panel 版本失败，可能是 Github API 限制，请稍后再试${plain}"
+            exit 1
+        fi
+        echo ""
+        echo -e "-----------------------------------------------------"
+        echo -e "${green}--------->>获取 X-Panel 最新版本：${yellow}${last_version}${plain}${green}，开始安装...${plain}"
+        echo -e "-----------------------------------------------------"
+        echo ""
+        sleep 2
+        echo -e "${green}---------------->>>>>>>>>安装进度50%${plain}"
+        sleep 3
+        echo ""
+        echo -e "${green}---------------->>>>>>>>>>>>>>>>>>>>>安装进度100%${plain}"
+        echo ""
+        sleep 2
+    else
+        last_version=$1
+        echo ""
+        echo -e "--------------------------------------------"
+        echo -e "${green}---------------->>>>开始安装 X-Panel $1${plain}"
+        echo -e "--------------------------------------------"
+        echo ""
+        sleep 2
+        echo -e "${green}---------------->>>>>>>>>安装进度50%${plain}"
+        sleep 3
+        echo ""
+        echo -e "${green}---------------->>>>>>>>>>>>>>>>>>>>>安装进度100%${plain}"
+        echo ""
+        sleep 2
+    fi
+
+    # 下载最新管理脚本到 /usr/bin/x-ui-temp
+    wget -O /usr/bin/x-ui-temp https://raw.githubusercontent.com/shini74744/X-Panel/main/x-ui.sh
+
+    # Stop x-ui service and remove old resources
+    if [[ -e /usr/local/x-ui/ ]]; then
+        systemctl stop x-ui 2>/dev/null
+        rm -rf /usr/local/x-ui/*
+    else
+        mkdir -p /usr/local/x-ui
+    fi
+
+    sleep 3
+    echo -e "${green}------->>>>>>>>>>>检查并保存安装目录${plain}"
+    echo ""
+
+    # 下载你上传的 x-ui 二进制文件
+    wget -N --no-check-certificate -O /usr/local/x-ui/x-ui "https://github.com/shini74744/X-Panel/releases/download/%E6%97%A0%E5%9F%9F%E5%90%8D%E7%89%88/x-ui"
+    if [[ $? -ne 0 ]]; then
+        echo -e "${red}下载 X-Panel 失败, 请检查服务器是否可以连接至 GitHub 或下载地址是否正确 ${plain}"
+        exit 1
+    fi
+
+    chmod +x /usr/local/x-ui/x-ui
+
+    # 更新 x-ui CLI 菜单脚本
+    mv -f /usr/bin/x-ui-temp /usr/bin/x-ui
+    chmod +x /usr/bin/x-ui
+
+    # 保证 /usr/local/x-ui/x-ui.sh 和 /usr/bin/x-ui 是同一个脚本，避免混乱
+    rm -f /usr/local/x-ui/x-ui.sh
+    ln -sf /usr/bin/x-ui /usr/local/x-ui/x-ui.sh
+
+    sleep 2
+    echo -e "${green}------->>>>>>>>>>>保存成功${plain}"
+    sleep 2
+    echo ""
+
+    # 安装/更新后的交互配置
+    config_after_install
+
+    # 执行 ssh 端口转发提示
+    ssh_forwarding
+
+    # systemd 服务文件：从你的仓库拉取
+    wget -qO /etc/systemd/system/x-ui.service https://raw.githubusercontent.com/shini74744/X-Panel/main/x-ui.service
+
     systemctl daemon-reload
     systemctl enable x-ui
     systemctl start x-ui
+
+    # warp 相关（保持原有逻辑）
     systemctl stop warp-go >/dev/null 2>&1
     wg-quick down wgcf >/dev/null 2>&1
     ipv4=$(curl -s4m8 ip.p3terx.com -k | sed -n 1p)
@@ -411,13 +397,6 @@ ssh_forwarding
     echo -e "x-ui uninstall    - 卸载 X-Panel 面板"
     echo -e "--------------------------------------------"
     echo ""
-    # if [[ -n $ipv4 ]]; then
-    #    echo -e "${yellow}面板 IPv4 访问地址为：${green}http://$ipv4:${config_port}/${config_webBasePath}${plain}"
-    # fi
-    # if [[ -n $ipv6 ]]; then
-    #    echo -e "${yellow}面板 IPv6 访问地址为：${green}http://[$ipv6]:${config_port}/${config_webBasePath}${plain}"
-    # fi
-    #    echo -e "请自行确保此端口没有被其他程序占用，${yellow}并且确保${red} ${config_port} ${yellow}端口已放行${plain}"
     sleep 3
     echo -e ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
     echo ""
@@ -458,4 +437,3 @@ echo -e "${green}探针地址：${yellow}shli.io${plain}"
 echo ""
 echo -e "----------------------------------------------"
 echo ""
-
