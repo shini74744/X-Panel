@@ -1552,7 +1552,7 @@ tcp_optimization() {
     echo -e "${green}TCP 网络调优脚本已执行完毕，正在检测当前内核状态...${plain}"
     echo ""
 
-    # 直接根据内核参数判断是否启用成功，而不是看脚本退出码
+    # 不看脚本退出码，直接根据内核参数判断是否启用成功
     local cc qdisc
     cc=$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null)
     qdisc=$(sysctl -n net.core.default_qdisc 2>/dev/null)
@@ -1570,6 +1570,7 @@ tcp_optimization() {
     echo ""
     before_show_menu
 }
+
 
 
 
@@ -2429,6 +2430,7 @@ show_menu() {
         LOGE "请输入正确的数字选项 [0-31]"
         ;;
     esac
+
 }
 
 
