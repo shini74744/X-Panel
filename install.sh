@@ -40,7 +40,6 @@ arch() {
 }
 
 echo ""
-# echo -e "GLIBC 检查已注释，如需要可自行开启"
 echo -e "${yellow}---------->>>>>当前系统的架构为: $(arch)${plain}"
 echo ""
 
@@ -338,6 +337,21 @@ install_x-ui() {
 
     chmod +x /usr/local/x-ui/x-ui
 
+    # 确保 bin 目录存在（x-ui 会在这里写配置，并在这里找 xray-core）
+    mkdir -p /usr/local/x-ui/bin
+
+    echo -e "${green}------->>>>>>>>>>>开始安装 Xray Core（官方脚本）${plain}"
+    # 安装/更新 Xray Core
+    bash <(curl -L -s https://github.com/XTLS/Xray-install/raw/main/install-release.sh)
+
+    # 给 x-ui 使用的 Xray 可执行文件做软链接
+    if [[ -x /usr/local/bin/xray ]]; then
+        ln -sf /usr/local/bin/xray /usr/local/x-ui/bin/xray-linux-amd64
+        echo -e "${green}已创建软链接：/usr/local/x-ui/bin/xray-linux-amd64 -> /usr/local/bin/xray${plain}"
+    else
+        echo -e "${red}警告：未找到 /usr/local/bin/xray，可能 Xray Core 安装失败，请手动检查${plain}"
+    fi
+
     # 更新 x-ui CLI 菜单脚本
     mv -f /usr/bin/x-ui-temp /usr/bin/x-ui
     chmod +x /usr/bin/x-ui
@@ -378,8 +392,8 @@ install_x-ui() {
     echo ""
     echo -e "         ---------------------"
     echo -e "         |${green}X-Panel 控制菜单用法 ${plain}|${plain}"
-    echo -e "         |  ${yellow}一个更好的面板   ${plain}|${plain}"   
-    echo -e "         | ${yellow}基于Xray Core构建 ${plain}|${plain}"  
+    echo -e "         |  ${yellow}一个更好的面板   ${plain}|${plain}"
+    echo -e "         | ${yellow}基于Xray Core构建 ${plain}|${plain}"
     echo -e "--------------------------------------------"
     echo -e "x-ui              - 进入管理脚本"
     echo -e "x-ui start        - 启动 X-Panel 面板"
@@ -425,7 +439,7 @@ echo -e "${yellow}在TG群中${red} https://t.me/XUI_CN ${yellow}截图进行反
 echo ""
 echo -e "----------------------------------------------"
 echo ""
-echo -e "${green}〔X-Panel面板〕项目地址：${yellow}https://github.com/xeefei/x-panel${plain}" 
+echo -e "${green}〔X-Panel面板〕项目地址：${yellow}https://github.com/xeefei/x-panel${plain}"
 echo ""
 echo -e "${green} 详细安装教程：${yellow}https://xeefei.blogspot.com/2025/09/x-panel.html${plain}"
 echo ""
