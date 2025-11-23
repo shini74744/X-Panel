@@ -1548,28 +1548,29 @@ tcp_optimization() {
     LOGI "正在执行 TCP 网络调优脚本..."
     bash <(curl -sL https://raw.githubusercontent.com/yahuisme/network-optimization/main/script.sh)
 
-    if [[ $? -eq 0 ]]; then
-        echo ""
-        echo -e "${green}TCP 网络调优脚本执行成功！${plain}"
+    echo ""
+    echo -e "${green}TCP 网络调优脚本已执行完毕，正在检测当前内核状态...${plain}"
+    echo ""
+
+    # 直接根据内核参数判断是否启用成功，而不是看脚本退出码
+    local cc qdisc
+    cc=$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null)
+    qdisc=$(sysctl -n net.core.default_qdisc 2>/dev/null)
+
+    echo "当前拥塞控制算法: ${cc:-未知}"
+    echo "当前队列调度算法: ${qdisc:-未知}"
+    echo ""
+
+    if [[ "$cc" == "bbr" && "$qdisc" == "fq" ]]; then
+        echo -e "${green}检测结果：已成功启用 BBR + FQ 网络优化！${plain}"
     else
-        echo ""
-        LOGE "TCP 网络调优脚本执行失败，请检查网络或脚本地址。"
+        echo -e "${red}检测结果：未检测到 BBR + FQ 生效，请检查上方脚本输出或手动检查配置。${plain}"
     fi
 
     echo ""
     before_show_menu
 }
 
-traffic_usage() {
-    echo ""
-    LOGI "正在执行流量消耗脚本..."
-    bash <(curl -Ls https://raw.githubusercontent.com/shini74744/jj/refs/heads/main/xh.sh)
-
-    echo ""
-    echo -e "${green}流量消耗脚本已执行完成！${plain}"
-    echo ""
-    before_show_menu
-}
 
 
 
