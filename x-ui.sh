@@ -5,6 +5,7 @@ green='\033[0;32m'
 blue='\033[0;34m'
 yellow='\033[0;33m'
 plain='\033[0m'
+pink='\033[38;5;213m'
 
 #Add some basic function here
 function LOGD() {
