@@ -1571,26 +1571,6 @@ tcp_optimization() {
     before_show_menu
 }
 
-install_fail2ban_fb5() {
-    echo ""
-    LOGI "开始执行 Fail2ban 安装脚本（fb5.sh）..."
-
-    bash <(curl -fsSL https://raw.githubusercontent.com/shini74744/jj/refs/heads/main/fb5.sh)
-    local rc=$?
-
-    if [[ $rc -eq 0 ]]; then
-        LOGI "Fail2ban 安装脚本执行完成。"
-    else
-        LOGE "Fail2ban 安装脚本执行失败，退出码: $rc"
-    fi
-
-    # 菜单调用：回主菜单；命令行调用：直接返回
-    if [[ $# == 0 ]]; then
-        before_show_menu
-    else
-        return $rc
-    fi
-}
 
 
 
@@ -2329,8 +2309,7 @@ show_menu() {
   ${green}28.${plain} 服务器DNS检测
   ${green}29.${plain} 放行全部防火墙
   ${green}30.${plain} TCP 网络调优
-  ${green}31.${plain} 一键安装 Fail2ban (fb5.sh)
-  ${green}32.${plain} 流量消耗统计
+  ${green}31.${plain} 流量消耗统计
 ——————————————————————
   ${green}若在使用过程中有任何问题请联系业务人员${plain}
   ${yellow}DAdaGi-大大怪专属面板${plain}
@@ -2346,7 +2325,7 @@ show_menu() {
 ----------------------------------------------
 "
     show_status
-    echo && read -p "请输入选项 [0-32]: " num
+    echo && read -p "请输入选项 [0-31]: " num
 
 
     case "${num}" in
@@ -2444,10 +2423,10 @@ show_menu() {
         tcp_optimization
         ;;
     31)
-        install_fail2ban_fb5
-        ;;
-    32)
         traffic_usage
+        ;;
+    *)
+        LOGE "请输入正确的数字选项 [0-31]"
         ;;
     esac
 }
