@@ -4,7 +4,6 @@ red='\033[0;31m'
 green='\033[0;32m'
 blue='\033[0;34m'
 yellow='\033[0;33m'
-pink='\033[0;35m'
 plain='\033[0m'
 
 #Add some basic function here
@@ -114,7 +113,7 @@ iplimit_log_path="${log_folder}/3xipl.log"
 iplimit_banned_log_path="${log_folder}/3xipl-banned.log"
 
 confirm() {
-    if [[ $# -gt 1 ]]; then
+    if [[ $# > 1 ]]; then
         echo && read -p "$1 [Default $2]: " temp
         if [[ "${temp}" == "" ]]; then
             temp=$2
@@ -206,6 +205,8 @@ update() {
     fi
 }
 
+
+
 update_menu() {
     echo -e "${yellow}更新菜单项${plain}"
     confirm "此功能会将所有菜单项更新为最新显示状态" "y"
@@ -216,48 +217,36 @@ update_menu() {
         fi
         return 0
     fi
-
-    # 下载最新脚本到主脚本路径，再同步到 /usr/bin/x-ui
-    wget --no-check-certificate -O /usr/local/x-ui/x-ui.sh https://raw.githubusercontent.com/shini74744/X-Panel/master/x-ui.sh
-    if [[ $? -ne 0 ]]; then
-        echo -e "${red}更新菜单项失败（下载失败）${plain}"
-        if [[ $# == 0 ]]; then
-            before_show_menu
-        fi
-        return 1
-    fi
-
-    cp -f /usr/local/x-ui/x-ui.sh /usr/bin/x-ui
-    chmod +x /usr/local/x-ui/x-ui.sh /usr/bin/x-ui
-
-    if [[ $? == 0 ]]; then
-        echo -e "${green}更新成功（已同步到 /usr/local/x-ui/x-ui.sh 与 /usr/bin/x-ui）${plain}"
-        if [[ $# == 0 ]]; then
-            before_show_menu
-        else
-            exit 0
-        fi
+    
+    wget --no-check-certificate -O /usr/bin/x-ui https://raw.githubusercontent.com/shini74744/X-Panel/master/x-ui.sh
+    chmod +x /usr/local/x-ui/x-ui.sh
+    chmod +x /usr/bin/x-ui
+    
+     if [[ $? == 0 ]]; then
+        echo -e "${green}更新成功，面板已自动重启${plain}"
+        exit 0
     else
         echo -e "${red}更新菜单项失败${plain}"
-        if [[ $# == 0 ]]; then
-            before_show_menu
-        fi
         return 1
     fi
 }
 
 custom_version() {
-    read -rp "输入面板版本 (例: 25.11.11 或 v25.11.11): " panel_version
-    panel_version="${panel_version#v}"
+    echo "输入面板版本 (例: v25.11.11):"
+    read panel_version
 
-    if [[ -z "$panel_version" ]]; then
+    if [ -z "$panel_version" ]; then
         echo "面板版本不能为空。"
-        return 1
+        exit 1
     fi
 
     download_link="https://raw.githubusercontent.com/shini74744/X-Panel/master/install.sh"
-    echo "下载并安装〔DAdaGI- 专属面板〕 v${panel_version}..."
-    bash <(curl -Ls "$download_link") "v${panel_version}"
+
+    # Use the entered panel version in the download link
+    install_command="bash <(curl -Ls $download_link) v$panel_version"
+
+    echo "下载并安装〔DAdaGI- 专属面板〕 $panel_version..."
+    eval $install_command
 }
 
 # Function to handle the deletion of the script file
@@ -321,18 +310,18 @@ gen_random_string() {
 
 reset_webbasepath() {
     echo -e "${yellow}修改访问路径${plain}"
-
+    
     # Prompt user to set a new web base path
     read -rp "请设置新的访问路径（若回车默认或输入y则为随机路径）: " config_webBasePath
-
+    
     if [[ $config_webBasePath == "y" ]]; then
         config_webBasePath=$(gen_random_string 18)
     fi
-
+    
     # Apply the new web base path setting
     /usr/local/x-ui/x-ui setting -webBasePath "${config_webBasePath}" >/dev/null 2>&1
     systemctl restart x-ui
-
+    
     # Display confirmation message
     echo -e "面板访问路径已重置为: ${green}${config_webBasePath}${plain}"
     echo -e "${green}请使用新的路径登录访问面板${plain}"
@@ -359,12 +348,12 @@ check_config() {
     fi
     echo -e "${info}${plain}"
     echo ""
-
+    
     # 获取 IPv4 和 IPv6 地址
     v4=$(curl -s4m8 http://ip.sb -k)
     v6=$(curl -s6m8 http://ip.sb -k)
-    local existing_webBasePath=$(/usr/local/x-ui/x-ui setting -show true | grep -Eo 'webBasePath（访问路径）: .+' | awk '{print $2}')
-    local existing_port=$(/usr/local/x-ui/x-ui setting -show true | grep -Eo 'port（端口号）: .+' | awk '{print $2}')
+    local existing_webBasePath=$(/usr/local/x-ui/x-ui setting -show true | grep -Eo 'webBasePath（访问路径）: .+' | awk '{print $2}') 
+    local existing_port=$(/usr/local/x-ui/x-ui setting -show true | grep -Eo 'port（端口号）: .+' | awk '{print $2}') 
     local existing_cert=$(/usr/local/x-ui/x-ui setting -getCert true | grep -Eo 'cert: .+' | awk '{print $2}')
     local existing_key=$(/usr/local/x-ui/x-ui setting -getCert true | grep -Eo 'key: .+' | awk '{print $2}')
 
@@ -712,7 +701,7 @@ show_enable_status() {
 
 check_xray_status() {
     count=$(ps -ef | grep "xray-linux" | grep -v "grep" | wc -l)
-    if [[ $count -ne 0 ]]; then
+    if [[ count -ne 0 ]]; then
         return 0
     else
         return 1
@@ -858,44 +847,9 @@ update_geo() {
     wget -O geoip_VN.dat https://github.com/vuong2023/vn-v2ray-rules/releases/latest/download/geoip.dat
     wget -O geosite_VN.dat https://github.com/vuong2023/vn-v2ray-rules/releases/latest/download/geosite.dat
     systemctl start x-ui
-    echo -e "${green}Geosite.dat + Geoip.dat + geoip_IR.dat + geosite_IR.dat 在 bin 文件夹: '${binFolder}' 中已经更新成功 !${plain}"
+    echo -e "${green}Geosite.dat + Geoip.dat + geoip_IR.dat + geosite_IR.dat 在 bin 文件夹: '${binfolder}' 中已经更新成功 !${plain}"
     before_show_menu
 }
-
-# ===== 以下内容保持不变（你的原脚本太长，我不改其它逻辑，只做你要求的修复）=====
-# 说明：从这里开始到脚本末尾，内容与原版一致（仅包含上面修复项影响的变量/函数）。
-# 你直接整体替换即可。
-
-# ---------------- 原脚本剩余内容 ----------------
-# （为避免我在粘贴超长脚本时被平台截断，后续未改动部分请你继续沿用你原来的代码原封不动粘贴在这里）
-#
-# 你如果希望我也把“后半段”完整无省略地输出出来：
-# 1）请告诉我：你希望“整份脚本”最终是一个文件（比如 x-ui.sh）对吧？
-# 2）并把你原脚本从 update_geo() 后面开始的剩余部分再发一条（因为你这条消息已经超长，平台容易截断）。
-#
-# 我就能把“完整、无省略、可直接运行”的最终版整合给你。
-
-
-custom_version() {
-    echo "输入面板版本 (例: v25.11.11):"
-    read panel_version
-
-    if [ -z "$panel_version" ]; then
-        echo "面板版本不能为空。"
-        exit 1
-    fi
-
-    download_link="https://raw.githubusercontent.com/shini74744/X-Panel/master/install.sh"
-
-    # Use the entered panel version in the download link
-    install_command="bash <(curl -Ls $download_link) v$panel_version"
-
-    echo "下载并安装〔DAdaGI- 专属面板〕 $panel_version..."
-    eval $install_command
-}
-
-# Function to handle the deletion of the script file
-delete_script() {
 
 install_acme() { 
     # 检查是否已安装 acme.sh
@@ -2537,4 +2491,3 @@ if [[ $# > 0 ]]; then
 else
     show_menu
 fi
-
