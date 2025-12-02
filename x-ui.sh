@@ -2343,8 +2343,8 @@ show_menu() {
   ${green}28.${plain} 服务器DNS检测
   ${green}29.${plain} 放行全部防火墙
   ${green}30.${plain} TCP 网络调优
-  ${green}31.${plain} 流量消耗统计
-  ${green}32.${plain} 安装 Fail2ban
+  ${green}31.${plain} 安装 Fail2ban
+  ${green}32.${plain} 流量消耗统计
 ——————————————————————
   ${green}若在使用过程中有任何问题请联系业务人员${plain}
   ${yellow}DAdaGi-大大怪专属面板${plain}
@@ -2458,10 +2458,10 @@ show_menu() {
         tcp_optimization
         ;;
     31)
-        traffic_usage
+        install_fail2ban2
         ;;
     32)
-        install_fail2ban2
+        traffic_usage
         ;;
     *)
         LOGE "请输入正确的数字选项 [0-32]"
