@@ -603,7 +603,7 @@ update_shell() {
 
     tmpfile=$(mktemp)
 
-    LOGI "莫慌！正在检查脚本更新..."
+    LOGI "莫慌哎呀！正在检查脚本儿更新..."
 
     if ! curl -fsSL "$url" -o "$tmpfile"; then
         LOGE "下载最新脚本失败，继续使用当前版本"
@@ -1571,6 +1571,40 @@ tcp_optimization() {
     before_show_menu
 }
 
+install_fail2ban2() {
+    local fb_script="https://raw.githubusercontent.com/shini74744/jj/refs/heads/main/fb5.sh"
+    LOGI "准备安装 Fail2ban（脚本：$fb_script）"
+
+    read -rp "将执行远程脚本安装 Fail2ban（回车继续，输入 n 取消）: " _ans
+    if [[ "${_ans}" =~ ^[nN]$ ]]; then
+        LOGE "已取消"
+        [[ $# == 0 ]] && before_show_menu
+        return 0
+    fi
+
+    if bash <(curl -fsSL "$fb_script"); then
+        LOGI "Fail2ban 安装脚本执行完成。"
+
+        if command -v systemctl >/dev/null 2>&1; then
+            systemctl enable --now fail2ban >/dev/null 2>&1 || true
+            if systemctl is-active --quiet fail2ban; then
+                LOGI "Fail2ban 服务：运行中"
+            else
+                LOGE "Fail2ban 服务：未运行（可执行：systemctl status fail2ban -l 查看原因）"
+            fi
+        else
+            LOGI "未检测到 systemctl，已跳过服务自启/状态检查（可能不是 systemd 系统）。"
+        fi
+
+        [[ $# == 0 ]] && before_show_menu
+        return 0
+    else
+        LOGE "Fail2ban 安装脚本执行失败。"
+        [[ $# == 0 ]] && before_show_menu
+        return 1
+    fi
+}
+
 
 
 
@@ -2310,6 +2344,7 @@ show_menu() {
   ${green}29.${plain} 放行全部防火墙
   ${green}30.${plain} TCP 网络调优
   ${green}31.${plain} 流量消耗统计
+  ${green}32.${plain} 安装 Fail2ban
 ——————————————————————
   ${green}若在使用过程中有任何问题请联系业务人员${plain}
   ${yellow}DAdaGi-大大怪专属面板${plain}
@@ -2325,7 +2360,7 @@ show_menu() {
 ----------------------------------------------
 "
     show_status
-    echo && read -p "请输入选项 [0-31]: " num
+    echo && read -p "请输入选项 [0-32]: " num
 
 
     case "${num}" in
@@ -2425,8 +2460,11 @@ show_menu() {
     31)
         traffic_usage
         ;;
+    32)
+        install_fail2ban2
+        ;;
     *)
-        LOGE "请输入正确的数字选项 [0-31]"
+        LOGE "请输入正确的数字选项 [0-32]"
         ;;
     esac
 }
