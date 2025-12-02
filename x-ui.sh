@@ -603,7 +603,7 @@ update_shell() {
 
     tmpfile=$(mktemp)
 
-    LOGI "莫慌哎呀！正在检查脚本儿更新..."
+    LOGI "莫慌！正在检查脚本更新..."
 
     if ! curl -fsSL "$url" -o "$tmpfile"; then
         LOGE "下载最新脚本失败，继续使用当前版本"
